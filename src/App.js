@@ -113,7 +113,8 @@ class App extends Component {
         return neighbours.reduce((trueNeighbours, neighbour) => {
           const currRow = r + neighbour[0];
           const currCol = c + neighbour[1];
-          const isNeighbourOnBoard = (currRow >= 0 && currRow <= totalBoardRows && currCol >= 0 && currCol <= totalBoardCols);
+
+          const isNeighbourOnBoard = (currRow >= 0 && currRow < totalBoardRows && currCol >= 0 && currCol < totalBoardCols);
 
           // if (isNeighbourOnBoard && boardStatus[currRow][currCol]) {
           //   return trueNeighbours + 1;
@@ -131,12 +132,12 @@ class App extends Component {
         for (let c = 0; c < totalBoardCols; c++) {
           const numTrueNeighbours = amountTrueNeighbours(r, c);
 
-          if (boardStatus[r][c] == false) {
-            if (numTrueNeighbours == 3) {
+          if (boardStatus[r][c] === false) {
+            if (numTrueNeighbours === 3) {
               clonedBoardStatus[r][c] = true;
             } 
           } else {
-            if (numTrueNeighbours < 2 || numTrueNeighbours > 4) {
+            if (numTrueNeighbours < 2 || numTrueNeighbours > 3) {
               clonedBoardStatus[r][c] = false;
             }
           }
