@@ -2,6 +2,8 @@ import React, { Component } from "react";
 
 const totalBoardRows = 6;
 const totalBoardCols = 6;
+const boardWidth = 400;
+const boardHeight = 300;
 const numCellStates = 2;
 
 const newBoardStatus = (cellState = () => Math.round(Math.random() * numCellStates)) => {
@@ -33,6 +35,8 @@ const BoardGrid = ({ boardStatus, onIncrementCellState }) => {
           key={`${r},${c}`}
           // className={boardStatus[r][c] ? 'alive' : 'dead'}
           className={`cellState${boardStatus[r][c].state}`}
+          width={boardWidth/totalBoardCols}
+          height={boardHeight/totalBoardRows}
           onClick={() => handleClick(r, c)}
         />
       );
