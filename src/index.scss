@@ -6,8 +6,10 @@ $alive-hover-color: red;
 $border-color: darkGray;
 $cell-size: 10px;
 
-$cell-state-0-color: white;
-$cell-state-1-color: black;
+$cell-state-0-color: black;
+$cell-state-0-background-color: white;
+$cell-state-1-color: white;
+$cell-state-1-background-color: black;
 
 body {
     color: $color;
@@ -43,10 +45,12 @@ td {
 }
 
 .cellState0 {
-    background-color: $cell-state-0-color;
+    color: $cell-state-0-color;
+    background-color: $cell-state-0-background-color;
 }
 .cellState1 {
-    background-color: $cell-state-1-color;
+    color: $cell-state-1-color;
+    background-color: $cell-state-1-background-color;
 }
 
 button {

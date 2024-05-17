@@ -5,8 +5,12 @@ const totalBoardCols = 6;
 const boardWidth = 400;
 const boardHeight = 300;
 const numCellStates = 2;
+const emptyCell = {
+  state: 0,
+  content: "X",
+};
 
-const newBoardStatus = (cellState = () => Math.round(Math.random() * numCellStates)) => {
+const getCells = () => {
   /*
   Returns a 2D array of boolean values to represent the cells.
   */
@@ -14,16 +18,14 @@ const newBoardStatus = (cellState = () => Math.round(Math.random() * numCellStat
   for (let r = 0; r < totalBoardRows; r++) {
     grid[r] = [];
     for (let c = 0; c < totalBoardCols; c++) {
-      grid[r][c] = {
-        state: cellState(),
-      };
+      grid[r][c] = emptyCell;
     }
   }
 
   return grid;
 };
 
-const BoardGrid = ({ boardStatus, onIncrementCellState }) => {
+const BoardGrid = ({ cells, onIncrementCellState }) => {
   const handleClick = (r, c) => onIncrementCellState(r, c);
 
   const tr = [];
@@ -33,12 +35,11 @@ const BoardGrid = ({ boardStatus, onIncrementCellState }) => {
       td.push(
         <td
           key={`${r},${c}`}
-          // className={boardStatus[r][c] ? 'alive' : 'dead'}
-          className={`cellState${boardStatus[r][c].state}`}
+          className={`cellState${cells[r][c].state}`}
           width={boardWidth/totalBoardCols}
           height={boardHeight/totalBoardRows}
           onClick={() => handleClick(r, c)}
-        />
+        >{cells[r][c].content}</td>
       );
     }
     tr.push(<tr key={r}>{td}</tr>);
@@ -64,7 +65,7 @@ const Slider = ({ speed, onSpeedChange }) => {
 
 class App extends Component {
   state = {
-    boardStatus: newBoardStatus(),
+    cells: getCells(),
     generation: 0,
     isGameRunning: false,
     speed: 850,
@@ -80,8 +81,7 @@ class App extends Component {
   // Clear Board button action
   handleClearBoard = () => {
     this.setState({
-      // boardStatus: newBoardStatus(() => false),
-      boardStatus: newBoardStatus(() => 0),
+      cells: getCells(),
       generation: 0,
       isGameRunning: false,
     });
@@ -90,7 +90,7 @@ class App extends Component {
   // New Board button action
   handleNewBoard = () => {
     this.setState({
-      boardStatus: newBoardStatus(),
+      cells: getCells(),
       generation: 0,
       isGameRunning: false,
     });
@@ -103,28 +103,26 @@ class App extends Component {
 
   // Toggle a cell's status and update the board's status as a result
   handleIncrementCellState = (r, c) => {
-    const toggleBoardStatus = prevState => {
-      const clonedBoardStatus = JSON.parse(JSON.stringify(prevState.boardStatus));
-      // clonedBoardStatus[r][c] = !clonedBoardStatus[r][c];
-      // clonedBoardStatus[r][c].state  = (clonedBoardStatus[r][c].state + 1) % numCellStates;
-      clonedBoardStatus[r][c] = this.incrementCellState(clonedBoardStatus[r][c]);
-      return clonedBoardStatus;
+    const updateCells = prevBoard => {
+      const clonedCells = JSON.parse(JSON.stringify(prevBoard.cells));
+      clonedCells[r][c] = this.incrementCellState(clonedCells[r][c]);
+      return clonedCells;
     };
 
-    this.setState(prevState => ({
-      boardStatus: toggleBoardStatus(prevState)
+    this.setState(prevBoard => ({
+      cells: updateCells(prevBoard)
     }));
   };
 
   // Return the number of True neighbours of a given cell
-  getNumTrueNeighbours = (boardStatus, r, c) => {
+  getNumTrueNeighbours = (cells, r, c) => {
     const neighbours = [[-1, -1], [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1]];
     return neighbours.reduce((numTrueNeighbours, neighbour) => {
       const neighbourRow = r + neighbour[0];
       const neighbourCol = c + neighbour[1];
 
       const isNeighbourOnBoard = (neighbourRow >= 0 && neighbourRow < totalBoardRows && neighbourCol >= 0 && neighbourCol < totalBoardCols);
-      const isNeighbourAlive = isNeighbourOnBoard && boardStatus[neighbourRow][neighbourCol].state > 0;
+      const isNeighbourAlive = isNeighbourOnBoard && cells[neighbourRow][neighbourCol].state > 0;
 
       return numTrueNeighbours + isNeighbourAlive;
 
@@ -133,39 +131,37 @@ class App extends Component {
 
   // Move the board forward one step by following the rules defined in Conway's Game of Life
   handleStep = () => {
-    const nextStep = prevState => {
+    const nextStep = prevBoard => {
       // current board status
-      const boardStatus = prevState.boardStatus;
+      const cells = prevBoard.cells;
 
       // updated board status
-      const clonedBoardStatus = JSON.parse(JSON.stringify(prevState.boardStatus));
+      const clonedCells = JSON.parse(JSON.stringify(prevBoard.cells));
 
       // Run through each cell and apply GoL rules for each cell
       for (let r = 0; r < totalBoardRows; r++) {
         for (let c = 0; c < totalBoardCols; c++) {
-          const numTrueNeighbours = this.getNumTrueNeighbours(boardStatus, r, c);
+          const numTrueNeighbours = this.getNumTrueNeighbours(cells, r, c);
 
           // Conway's Game of Life rule logic
-          // console.log(r, c, numTrueNeighbours);
-          if (boardStatus[r][c].state === 0) {
+          if (cells[r][c].state === 0) {
             if ([3].includes(numTrueNeighbours)) {
-              // console.log(r, c, "state 0 updating")
-              clonedBoardStatus[r][c] = this.incrementCellState(clonedBoardStatus[r][c]);
+              clonedCells[r][c] = this.incrementCellState(clonedCells[r][c]);
             }
-          } else if (boardStatus[r][c].state === 1) {
+          } else if (cells[r][c].state === 1) {
             if ([0, 1, 4, 5, 6, 7, 8].includes(numTrueNeighbours)) {
-              clonedBoardStatus[r][c] = this.incrementCellState(clonedBoardStatus[r][c]);
+              clonedCells[r][c] = this.incrementCellState(clonedCells[r][c]);
             }
           }
         }
       }
 
-      return clonedBoardStatus;
+      return clonedCells;
     };
 
-    this.setState(prevState => ({
-      boardStatus: nextStep(prevState),
-      generation: prevState.generation + 1,
+    this.setState(prevBoard => ({
+      cells: nextStep(prevBoard),
+      generation: prevBoard.generation + 1,
     }));
   };
 
@@ -183,11 +179,11 @@ class App extends Component {
     this.setState({ isGameRunning: false });
   };
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevBoard) {
     const { isGameRunning, speed } = this.state;
-    const speedChanged = prevState.speed !== speed;
-    const gameStarted = !prevState.isGameRunning && isGameRunning;
-    const gameStopped = prevState.isGameRunning && !isGameRunning;
+    const speedChanged = prevBoard.speed !== speed;
+    const gameStarted = !prevBoard.isGameRunning && isGameRunning;
+    const gameStopped = prevBoard.isGameRunning && !isGameRunning;
 
     // if we changed the speed or stopped the game, clear the timer
     if ((isGameRunning && speedChanged) || gameStopped) {
@@ -204,12 +200,12 @@ class App extends Component {
   }
 
   render() {
-    const { boardStatus, isGameRunning, generation, speed } = this.state;
+    const { cells, isGameRunning, generation, speed } = this.state;
 
     return (
       <div>
         <h1>Dylan's Game of Life</h1>
-        <BoardGrid boardStatus={boardStatus} onIncrementCellState={this.handleIncrementCellState} />
+        <BoardGrid cells={cells} onIncrementCellState={this.handleIncrementCellState} />
         <div className="flexRow upperControls">
           <span>
             {"- "}
@@ -222,7 +218,7 @@ class App extends Component {
           {this.runStopButton()}
           <button type="button" disabled={isGameRunning} onClick={this.handleStep}>Step</button>
           <button type="button" onClick={this.handleClearBoard}>Clear Board</button>
-          <button type="button" onClick={this.handleNewBoard}>New Board</button>
+          {/* <button type="button" onClick={this.handleNewBoard}>New Board</button> */}
         </div>
       </div>
     );
