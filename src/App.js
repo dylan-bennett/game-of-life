@@ -1,8 +1,5 @@
 import React, { Component } from "react";
 
-const width = 400;
-const height = 300;
-
 // Custom Button component to reduce repetition
 const Button = ({
   children,
