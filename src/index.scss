@@ -1,10 +1,607 @@
-$td-border-color: darkGray;
+// =============================================================================
+// SASS Variables
+// =============================================================================
 
-table {
-    border-collapse: collapse;
+// Color palette
+$colors: (
+  primary: #007bff,
+  primary-hover: #0056b3,
+  success: #28a745,
+  success-hover: #1e7e34,
+  neutral: (
+    white: #ffffff,
+    gray-50: #f8f9fa,
+    gray-100: #f5f5f5,
+    gray-200: #e9ecef,
+    gray-300: #ddd,
+    gray-400: #ccc,
+    gray-500: #bbb,
+    gray-600: #666,
+    gray-700: #555,
+    gray-800: #333,
+    gray-900: #1a1a1a,
+  ),
+  dark: (
+    bg-primary: #2d2d2d,
+    bg-secondary: #3a3a3a,
+    bg-tertiary: #4a4a4a,
+    bg-quaternary: #5a5a5a,
+    text: #e0e0e0,
+    border: #555,
+    border-light: #666,
+  ),
+);
+
+// Spacing scale
+$spacing: (
+  xs: 0.25rem,
+  sm: 0.5rem,
+  md: 0.75rem,
+  lg: 1rem,
+  xl: 1.5rem,
+  2xl: 2rem,
+);
+
+// Typography
+$font-sizes: (
+  xs: 0.7rem,
+  sm: 0.75rem,
+  base: 0.875rem,
+  lg: 1rem,
+  xl: 1.25rem,
+  2xl: 1.5rem,
+  3xl: 2rem,
+  4xl: 2.5rem,
+);
+
+$font-weights: (
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+);
+
+// Breakpoints
+$breakpoints: (
+  sm: 480px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1200px,
+);
+
+// Component sizes
+$sizes: (
+  button-height: 44px,
+  button-height-mobile: 32px,
+  cell-size: 20px,
+  cell-size-mobile: 16px,
+  cell-size-xs: 14px,
+  border-radius: 4px,
+  border-radius-lg: 8px,
+  border-radius-xl: 12px,
+);
+
+// =============================================================================
+// SASS Functions
+// =============================================================================
+
+@function color($color-key, $variant: null) {
+  @if $variant {
+    @return map-get(map-get($colors, $color-key), $variant);
+  }
+  @return map-get($colors, $color-key);
 }
 
-td {
-    border: 1px solid $td-border-color;
-    text-align: center;
+@function spacing($size) {
+  @return map-get($spacing, $size);
+}
+
+@function font-size($size) {
+  @return map-get($font-sizes, $size);
+}
+
+@function font-weight($weight) {
+  @return map-get($font-weights, $weight);
+}
+
+@function breakpoint($size) {
+  @return map-get($breakpoints, $size);
+}
+
+@function size($key) {
+  @return map-get($sizes, $key);
+}
+
+// =============================================================================
+// SASS Mixins
+// =============================================================================
+
+// Responsive mixins
+@mixin respond-above($breakpoint) {
+  @media (min-width: #{breakpoint($breakpoint)}) {
+    @content;
+  }
+}
+
+@mixin respond-below($breakpoint) {
+  @media (max-width: #{breakpoint($breakpoint) - 1px}) {
+    @content;
+  }
+}
+
+// Button mixin
+@mixin button-base($height: null) {
+  @if $height == null {
+    $height: size(button-height);
+  }
+
+  padding: spacing(md) spacing(lg);
+  border: 1px solid color(neutral, gray-300);
+  border-radius: size(border-radius-lg);
+  background: color(neutral, white);
+  color: color(neutral, gray-800);
+  font-size: font-size(base);
+  font-weight: font-weight(medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: $height;
+  min-width: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: color(neutral, gray-50);
+    border-color: color(neutral, gray-500);
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@mixin button-variant($bg-color, $hover-color) {
+  background: $bg-color;
+  color: color(neutral, white);
+  border-color: $bg-color;
+
+  &:hover {
+    background: $hover-color;
+    border-color: $hover-color;
+  }
+}
+
+// Card/container mixin
+@mixin card($padding: spacing(xl), $radius: size(border-radius-lg)) {
+  background: color(neutral, white);
+  border-radius: $radius;
+  padding: $padding;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+// Section mixin
+@mixin section($bg: color(neutral, gray-50)) {
+  padding: spacing(lg);
+  background: $bg;
+  border-radius: size(border-radius-lg);
+  border: 1px solid color(neutral, gray-200);
+}
+
+// Grid mixin
+@mixin grid($columns: 1, $gap: spacing(xl)) {
+  display: grid;
+  gap: $gap;
+  grid-template-columns: repeat($columns, 1fr);
+}
+
+// Flex utilities
+@mixin flex($direction: row, $gap: spacing(sm), $wrap: wrap) {
+  display: flex;
+  flex-direction: $direction;
+  gap: $gap;
+  flex-wrap: $wrap;
+}
+
+// Dark mode mixin
+@mixin dark-mode {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+}
+
+// Touch-friendly sizing
+@mixin touch-friendly {
+  min-height: size(button-height);
+
+  @include respond-below(md) {
+    min-height: size(button-height-mobile);
+  }
+}
+
+// =============================================================================
+// Base Styles
+// =============================================================================
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: color(neutral, gray-100);
+  padding: spacing(lg);
+
+  @include respond-above(lg) {
+    padding: spacing(2xl);
+  }
+
+  @include respond-below(md) {
+    padding: spacing(sm);
+  }
+
+  @include dark-mode {
+    background-color: color(dark, bg-primary);
+    color: color(dark, text);
+  }
+}
+
+// =============================================================================
+// Main App Structure
+// =============================================================================
+
+.app-container {
+  max-width: breakpoint(xl);
+  margin: 0 auto;
+  @include card(spacing(xl), size(border-radius-xl));
+
+  @include respond-above(md) {
+    padding: spacing(2xl);
+  }
+
+  @include respond-below(md) {
+    padding: spacing(lg);
+    border-radius: size(border-radius-lg);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-primary);
+    color: color(dark, text);
+  }
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: spacing(2xl);
+}
+
+.app-title {
+  font-size: font-size(3xl);
+  color: color(neutral, gray-800);
+  margin: 0;
+  font-weight: font-weight(semibold);
+
+  @include respond-above(md) {
+    font-size: font-size(4xl);
+  }
+
+  @include respond-below(md) {
+    font-size: font-size(2xl);
+  }
+
+  @include respond-below(sm) {
+    font-size: font-size(xl);
+  }
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+// =============================================================================
+// Grid Controls
+// =============================================================================
+
+.grid-controls {
+  @include flex(row, spacing(lg));
+  margin-bottom: spacing(xl);
+  @include section();
+  justify-content: center;
+
+  @include respond-above(md) {
+    flex-wrap: nowrap;
+  }
+
+  @include respond-below(md) {
+    gap: spacing(md);
+  }
+
+  @include respond-below(sm) {
+    flex-direction: column;
+    gap: spacing(sm);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    border-color: color(dark, border);
+  }
+}
+
+.control-group {
+  @include flex(column, spacing(xs));
+  min-width: 120px;
+
+  @include respond-above(md) {
+    min-width: 140px;
+  }
+
+  @include respond-below(md) {
+    min-width: 100px;
+    flex: 1;
+  }
+
+  @include respond-below(sm) {
+    min-width: auto;
+  }
+}
+
+.control-label {
+  font-size: font-size(base);
+  font-weight: font-weight(medium);
+  color: color(neutral, gray-700);
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+.control-select {
+  padding: spacing(sm);
+  border: 1px solid color(neutral, gray-300);
+  border-radius: size(border-radius);
+  font-size: font-size(lg);
+  background: color(neutral, white);
+  @include touch-friendly();
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+  }
+}
+
+// =============================================================================
+// Game Grid
+// =============================================================================
+
+.grid-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: spacing(xl);
+  overflow-x: auto;
+  padding: spacing(sm);
+}
+
+.game-grid {
+  border: 2px solid color(neutral, gray-800);
+  border-collapse: collapse;
+  background: color(neutral, white);
+  border-radius: size(border-radius);
+  overflow: hidden;
+
+  @include dark-mode {
+    border-color: color(dark, border-light);
+  }
+}
+
+.game-table-body {
+  border: 3px solid color(neutral, gray-300);
+
+  @include dark-mode {
+    border-color: color(dark, border);
+  }
+}
+
+.game-cell {
+  border: 1px solid color(neutral, gray-300);
+  cursor: pointer;
+  transition: opacity 0.1s ease;
+  min-width: size(cell-size);
+  min-height: size(cell-size);
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @include respond-below(md) {
+    min-width: size(cell-size-mobile);
+    min-height: size(cell-size-mobile);
+  }
+
+  @include respond-below(sm) {
+    min-width: size(cell-size-xs);
+    min-height: size(cell-size-xs);
+  }
+
+  @include dark-mode {
+    border-color: color(dark, border);
+  }
+}
+
+// =============================================================================
+// Controls Layout
+// =============================================================================
+
+.controls-layout {
+  @include grid(1, spacing(xl));
+
+  @include respond-above(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-above(lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.control-section {
+  @include section();
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    border-color: color(dark, border);
+  }
+}
+
+.section-title {
+  margin: 0 0 spacing(md) 0;
+  font-size: font-size(lg);
+  font-weight: font-weight(semibold);
+  color: color(neutral, gray-800);
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+.button-group {
+  @include flex(row, spacing(sm));
+
+  @include respond-below(md) {
+    gap: spacing(xs);
+  }
+}
+
+// =============================================================================
+// Buttons
+// =============================================================================
+
+.app-button {
+  @include button-base();
+
+  &.primary {
+    @include button-variant(color(primary), color(primary-hover));
+  }
+
+  &.success {
+    @include button-variant(color(success), color(success-hover));
+  }
+
+  @include respond-below(md) {
+    padding: spacing(sm) spacing(md);
+    font-size: font-size(sm);
+    min-width: 70px;
+    min-height: size(button-height-mobile);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+// =============================================================================
+// Speed Control
+// =============================================================================
+
+.speed-control {
+  @include flex(column, spacing(sm));
+}
+
+.speed-slider {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  border-radius: 3px;
+  background: color(neutral, gray-300);
+  outline: none;
+  margin: spacing(sm) 0;
+}
+
+.speed-info {
+  font-size: font-size(sm);
+  color: color(neutral, gray-600);
+  margin: 0;
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+// =============================================================================
+// Rules Section
+// =============================================================================
+
+.rules-section {
+  margin-top: spacing(lg);
+}
+
+.rules-stage {
+  margin-bottom: spacing(lg);
+  padding: spacing(lg);
+  background: color(neutral, white);
+  border-radius: size(border-radius-lg);
+  border: 1px solid color(neutral, gray-300);
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    border-color: color(dark, border);
+  }
+}
+
+.stage-header {
+  font-weight: font-weight(semibold);
+  margin-bottom: spacing(sm);
+  color: color(neutral, gray-800);
+  font-size: font-size(base);
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+.rules-buttons {
+  @include flex(row, 4px);
+
+  @include respond-below(md) {
+    gap: 2px;
+  }
+}
+
+.rule-button {
+  margin: 0;
+  padding: spacing(xs) spacing(sm);
+  border: 1px solid color(neutral, gray-400);
+  border-radius: size(border-radius);
+  cursor: pointer;
+  min-width: 70px;
+  font-size: font-size(sm);
+  text-align: center;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  @include respond-below(md) {
+    min-width: 60px;
+    font-size: font-size(xs);
+    padding: spacing(xs);
+    min-height: size(button-height-mobile);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+  }
 }
