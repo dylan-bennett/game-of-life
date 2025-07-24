@@ -1,4 +1,10 @@
-import React, { Component } from "react";
+import React, {
+  Component,
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSkull, faHeart, faDna } from "@fortawesome/free-solid-svg-icons";
 
@@ -82,7 +88,7 @@ const createRules = (numCellStages) => {
   return rules;
 };
 
-// Render the grid of cells as an HTML table
+// Canvas-based Grid component for better performance and drag support
 const Grid = ({
   cells,
   onCellClick,
@@ -92,38 +98,176 @@ const Grid = ({
   cellSize,
   colorScheme,
 }) => {
-  const handleCellClick = (cell) => onCellClick(cell);
+  const canvasRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastDraggedCell, setLastDraggedCell] = useState(null);
 
-  // Create the HTML table of cells
-  const tableRows = [];
-  for (let r = 0; r < rows; r++) {
-    const rowCells = [];
-    for (let c = 0; c < cols; c++) {
-      rowCells.push(
-        <td
-          key={`${r},${c}`}
-          className="game-cell"
-          onClick={() => handleCellClick(cells[r][c])}
-          style={{
-            backgroundColor: getCellBackgroundColor(
-              cells[r][c].stage,
-              numCellStages,
-              colorScheme
-            ),
-            width: cellSize,
-            height: cellSize,
-          }}
-        ></td>
-      );
+  // Get cell coordinates from mouse position
+  const getCellFromMousePos = useCallback(
+    (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const col = Math.floor(x / cellSize);
+      const row = Math.floor(y / cellSize);
+
+      if (row >= 0 && row < rows && col >= 0 && col < cols) {
+        return { row, col };
+      }
+      return null;
+    },
+    [cellSize, rows, cols]
+  );
+
+  // Handle cell interaction (click or drag)
+  const handleCellInteraction = useCallback(
+    (e) => {
+      const cellPos = getCellFromMousePos(e);
+      if (cellPos) {
+        const { row, col } = cellPos;
+        const cellKey = `${row},${col}`;
+
+        // Only trigger if we haven't already dragged over this cell
+        if (!isDragging || lastDraggedCell !== cellKey) {
+          onCellClick(cells[row][col]);
+          setLastDraggedCell(cellKey);
+        }
+      }
+    },
+    [getCellFromMousePos, isDragging, lastDraggedCell, onCellClick, cells]
+  );
+
+  // Mouse event handlers
+  const handleMouseDown = useCallback(
+    (e) => {
+      setIsDragging(true);
+      setLastDraggedCell(null);
+      handleCellInteraction(e);
+    },
+    [handleCellInteraction]
+  );
+
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (isDragging) {
+        handleCellInteraction(e);
+      }
+    },
+    [isDragging, handleCellInteraction]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setLastDraggedCell(null);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragging(false);
+    setLastDraggedCell(null);
+  }, []);
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = useCallback(
+    (e) => {
+      e.preventDefault(); // Prevent scrolling
+      const touch = e.touches[0];
+      const mouseEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      };
+      setIsDragging(true);
+      setLastDraggedCell(null);
+      handleCellInteraction(mouseEvent);
+    },
+    [handleCellInteraction]
+  );
+
+  const handleTouchMove = useCallback(
+    (e) => {
+      e.preventDefault(); // Prevent scrolling
+      if (isDragging && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const mouseEvent = {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        };
+        handleCellInteraction(mouseEvent);
+      }
+    },
+    [isDragging, handleCellInteraction]
+  );
+
+  const handleTouchEnd = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    setLastDraggedCell(null);
+  }, []);
+
+  // Draw the grid on canvas
+  const drawGrid = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw cells
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const cell = cells[row][col];
+        const x = col * cellSize;
+        const y = row * cellSize;
+
+        // Set fill color based on cell stage
+        ctx.fillStyle = getCellBackgroundColor(
+          cell.stage,
+          numCellStages,
+          colorScheme
+        );
+        ctx.fillRect(x, y, cellSize, cellSize);
+
+        // Draw cell border
+        ctx.strokeStyle = "#ddd";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cellSize, cellSize);
+      }
     }
-    tableRows.push(<tr key={r}>{rowCells}</tr>);
-  }
+  }, [cells, rows, cols, cellSize, numCellStages, colorScheme]);
+
+  // Redraw when cells or props change
+  useEffect(() => {
+    drawGrid();
+  }, [drawGrid]);
+
+  // Set canvas size
+  const canvasWidth = cols * cellSize;
+  const canvasHeight = rows * cellSize;
 
   return (
     <div className="grid-container">
-      <table className="game-grid">
-        <tbody className="game-table-body">{tableRows}</tbody>
-      </table>
+      <canvas
+        ref={canvasRef}
+        width={canvasWidth}
+        height={canvasHeight}
+        className="game-grid"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          border: "2px solid #333",
+          cursor: isDragging ? "crosshair" : "pointer",
+        }}
+      />
     </div>
   );
 };

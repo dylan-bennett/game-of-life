@@ -428,47 +428,73 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: spacing(xl);
-  overflow: hidden;
   padding: spacing(sm);
-  max-width: 640px; // Fixed width to accommodate 600px grid + padding
-  max-height: 440px; // Fixed height to accommodate 400px grid + padding
   margin-left: auto;
   margin-right: auto;
+
+  // Responsive container sizing
+  @include respond-above(lg) {
+    max-width: 640px; // For larger screens, limit container width
+  }
+
+  @include respond-below(md) {
+    padding: spacing(xs);
+    margin-bottom: spacing(lg);
+  }
+
+  @include respond-below(sm) {
+    padding: 0;
+    overflow-x: auto; // Allow horizontal scroll on very small screens
+  }
 }
 
 .game-grid {
-  border: 2px solid color(neutral, gray-800);
-  border-collapse: collapse;
-  background: color(neutral, white);
   border-radius: size(border-radius);
   overflow: hidden;
-  width: 600px; // Fixed grid width
-  height: 400px; // Fixed grid height
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s ease;
 
-  @include dark-mode {
-    border-color: color(dark, border-light);
-  }
-}
-
-.game-table-body {
-  border: 3px solid color(neutral, gray-300);
-
-  @include dark-mode {
-    border-color: color(dark, border);
-  }
-}
-
-.game-cell {
-  border: 1px solid color(neutral, gray-300);
-  cursor: pointer;
-  transition: background-color 0.1s ease;
+  // Ensure crisp pixel rendering for the canvas
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 
   &:hover {
-    opacity: 0.8;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
 
   @include dark-mode {
-    border-color: color(dark, border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  // Responsive canvas sizing
+  @include respond-below(md) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  // Touch-friendly interactions
+  @media (hover: none) and (pointer: coarse) {
+    // On touch devices, remove hover effects and ensure smooth touch interactions
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    // Prevent text selection and callouts on touch
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    // Smooth scrolling for touch devices
+    -webkit-overflow-scrolling: touch;
   }
 }
 
