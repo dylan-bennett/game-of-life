@@ -301,6 +301,64 @@ body {
   }
 }
 
+// Customize button specific styles
+.customize-button {
+  gap: spacing(xs);
+  font-weight: font-weight(semibold);
+  position: relative;
+  overflow: hidden;
+  padding: spacing(sm) spacing(lg);
+  min-width: auto;
+
+  // Subtle pulse animation to draw attention
+  &:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
+    z-index: 1;
+  }
+
+  .customize-text {
+    position: relative;
+    z-index: 2;
+    font-size: font-size(sm);
+
+    @include respond-below(sm) {
+      display: none; // Hide text on very small screens, show only icon
+    }
+  }
+
+  svg {
+    position: relative;
+    z-index: 2;
+  }
+
+  @include respond-below(md) {
+    padding: spacing(xs) spacing(md);
+    gap: spacing(xs);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 // =============================================================================
 // Main Content Area
 // =============================================================================

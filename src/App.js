@@ -12,6 +12,7 @@ import {
   faArrowUp,
   faBars,
   faTimes,
+  faCog,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Custom Button component to reduce repetition
@@ -176,7 +177,7 @@ const InstructionsOverlay = ({ onHide }) => {
           borderRadius: "12px",
           boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
           textAlign: "center",
-          maxWidth: "300px",
+          maxWidth: "350px",
           margin: "1rem",
           border: "2px solid #333",
         }}
@@ -192,13 +193,25 @@ const InstructionsOverlay = ({ onHide }) => {
         </h3>
         <p
           style={{
-            margin: 0,
+            margin: "0 0 1rem 0",
             color: "#666",
             fontSize: "1rem",
             lineHeight: "1.4",
           }}
         >
           {instructionText}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: "#666",
+            fontSize: "0.9rem",
+            lineHeight: "1.4",
+            fontStyle: "italic",
+          }}
+        >
+          💡 Check out the sidebar for customization options: cell stages,
+          rules, colors, speed, and more!
         </p>
       </div>
     </div>
@@ -406,10 +419,18 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => (
     <h1 className="app-title">Game of Life: Evolved</h1>
     <Button
       onClick={onToggleSidebar}
-      className="sidebar-toggle"
-      variant="default"
+      className="sidebar-toggle customize-button"
+      variant="primary"
+      title={
+        isSidebarOpen
+          ? "Close customization panel"
+          : "Open customization panel - change colors, rules, speed, and more!"
+      }
     >
       <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} />
+      <span className="customize-text">
+        {isSidebarOpen ? "Close" : "Customize"}
+      </span>
     </Button>
   </header>
 );
@@ -584,7 +605,13 @@ const Sidebar = ({
   <div className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
     <div className="sidebar-content">
       <div className="sidebar-header">
-        <h3>Controls</h3>
+        <h3>
+          <FontAwesomeIcon
+            icon={faCog}
+            style={{ marginRight: "0.5rem", color: "#007bff" }}
+          />
+          Customize Game
+        </h3>
         <Button onClick={onClose} className="sidebar-close">
           <FontAwesomeIcon icon={faTimes} />
         </Button>
@@ -668,7 +695,7 @@ class App extends Component {
       isAutoStepping: false,
       speed: 5, // Speed scale from 1 (slowest) to 10 (fastest), default medium-fast
       colorScheme: "greyscale", // Default to greyscale
-      isSidebarOpen: false,
+      isSidebarOpen: false, // Start with sidebar closed but make customization obvious through other UX improvements
       // Grid will be calculated dynamically based on available space
       cellSize: 20,
       cells: [],
