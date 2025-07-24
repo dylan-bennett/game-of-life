@@ -284,7 +284,7 @@ const GameControls = ({ onStep, onToggleAuto, isAutoStepping }) => (
         onClick={onToggleAuto}
         variant={isAutoStepping ? "default" : "success"}
       >
-        {isAutoStepping ? "Pause" : "Play"}
+        {isAutoStepping ? "Stop" : "Start"}
       </Button>
     </div>
   </div>
