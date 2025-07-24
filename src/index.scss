@@ -604,4 +604,46 @@ body {
     color: color(dark, text);
     border-color: color(dark, border-light);
   }
+
+  // Icon-only button styles
+  &.rule-button-icon {
+    flex-direction: column;
+    gap: spacing(xs);
+    padding: spacing(xs);
+    min-width: 50px;
+    min-height: 44px;
+
+    @include respond-below(md) {
+      min-width: 42px;
+      min-height: 38px;
+      gap: 2px;
+    }
+
+    .neighbor-count {
+      font-size: font-size(xs);
+      font-weight: font-weight(semibold);
+      line-height: 1;
+
+      @include respond-below(md) {
+        font-size: 10px;
+      }
+    }
+
+    svg {
+      font-size: font-size(sm);
+
+      @include respond-below(md) {
+        font-size: font-size(xs);
+      }
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
 }
