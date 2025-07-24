@@ -45,13 +45,7 @@ const getCellBackgroundColor = (
     return "#FFFFFF";
   }
 
-  if (colorScheme === "rainbow") {
-    // For rainbow mode, use HSL with softer, more pleasant colors
-    const hue = Math.round((stage / (numCellStages - 1)) * 280); // Use 280° instead of 360° to avoid harsh reds/magentas
-    const saturation = 65; // Reduced saturation for softer colors
-    const lightness = 70; // Higher lightness for pastel-like appearance
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  } else {
+  if (colorScheme === "greyscale") {
     // Original greyscale mode
     // Calculate color value (0-255) interpolating from white (255) to black (0)
     const colorValue = Math.round(255 * (1 - stage / (numCellStages - 1)));
@@ -59,7 +53,48 @@ const getCellBackgroundColor = (
     // Convert to hex color
     const hexValue = colorValue.toString(16).padStart(2, "0");
     return `#${hexValue}${hexValue}${hexValue}`;
+  } else {
+    // Gradient mode - parse the colorScheme to get start and end colors
+    const gradients = {
+      "blue-purple": { start: "#E3F2FD", end: "#4A148C" }, // Light blue to deep purple
+      "green-blue": { start: "#E8F5E8", end: "#1A237E" }, // Light green to deep blue
+      "orange-red": { start: "#FFF3E0", end: "#B71C1C" }, // Light orange to deep red
+      "purple-pink": { start: "#F3E5F5", end: "#880E4F" }, // Light purple to deep pink
+      "teal-navy": { start: "#E0F2F1", end: "#0D47A1" }, // Light teal to navy
+    };
+
+    // Default to blue-purple if scheme not found
+    const colors = gradients[colorScheme] || gradients["blue-purple"];
+
+    return interpolateColor(
+      colors.start,
+      colors.end,
+      stage / (numCellStages - 1)
+    );
   }
+};
+
+// Linear interpolation between two hex colors
+const interpolateColor = (startColor, endColor, factor) => {
+  // Parse hex colors
+  const parseHex = (hex) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+  };
+
+  const start = parseHex(startColor);
+  const end = parseHex(endColor);
+
+  // Interpolate each component
+  const r = Math.round(start.r + (end.r - start.r) * factor);
+  const g = Math.round(start.g + (end.g - start.g) * factor);
+  const b = Math.round(start.b + (end.b - start.b) * factor);
+
+  // Convert back to hex
+  const toHex = (value) => value.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
 // Initialize our 2D array of cells
@@ -523,22 +558,18 @@ const Sidebar = ({
 
       <div className="sidebar-section">
         <h4 className="sidebar-section-title">Color Scheme</h4>
-        <div className="sidebar-button-group">
-          <Button
-            onClick={() => onColorSchemeChange("greyscale")}
-            variant={colorScheme === "greyscale" ? "primary" : "default"}
-            className="sidebar-color-button"
-          >
-            Greyscale
-          </Button>
-          <Button
-            onClick={() => onColorSchemeChange("rainbow")}
-            variant={colorScheme === "rainbow" ? "primary" : "default"}
-            className="sidebar-color-button"
-          >
-            Rainbow
-          </Button>
-        </div>
+        <select
+          className="sidebar-select"
+          value={colorScheme}
+          onChange={(e) => onColorSchemeChange(e.target.value)}
+        >
+          <option value="greyscale">Greyscale</option>
+          <option value="blue-purple">Blue → Purple</option>
+          <option value="green-blue">Green → Blue</option>
+          <option value="orange-red">Orange → Red</option>
+          <option value="purple-pink">Purple → Pink</option>
+          <option value="teal-navy">Teal → Navy</option>
+        </select>
       </div>
 
       <RulesControl rules={rules} onRuleChange={onRuleChange} />

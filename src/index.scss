@@ -641,6 +641,44 @@ body {
   }
 }
 
+.sidebar-select {
+  width: 100%;
+  padding: spacing(sm) spacing(md);
+  border: 1px solid color(neutral, gray-300);
+  border-radius: size(border-radius);
+  background: color(neutral, white);
+  color: color(neutral, gray-800);
+  font-size: font-size(base);
+  font-weight: font-weight(medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: color(neutral, gray-500);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: color(primary);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      border-color: color(dark, text);
+    }
+
+    &:focus {
+      border-color: color(dark, text);
+      box-shadow: 0 0 0 2px rgba(224, 224, 224, 0.25);
+    }
+  }
+}
+
 .sidebar-button-group {
   display: flex;
   gap: spacing(xs);
