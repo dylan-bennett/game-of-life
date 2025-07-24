@@ -730,6 +730,7 @@ body {
 .sidebar-reset {
   @include button-base();
   width: 100%;
+  margin-bottom: spacing(md);
 
   @include dark-mode {
     background: color(dark, bg-tertiary);
