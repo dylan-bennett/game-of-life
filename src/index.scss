@@ -461,7 +461,7 @@ body {
 .game-cell {
   border: 1px solid color(neutral, gray-300);
   cursor: pointer;
-  transition: opacity 0.1s ease;
+  transition: background-color 0.1s ease;
 
   &:hover {
     opacity: 0.8;

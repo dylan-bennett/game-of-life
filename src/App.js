@@ -23,18 +23,31 @@ const Button = ({
 );
 
 // Calculate background color based on stage
-const getCellBackgroundColor = (stage, numCellStages) => {
+const getCellBackgroundColor = (
+  stage,
+  numCellStages,
+  colorScheme = "greyscale"
+) => {
   // Handle edge case where numCellStages is 1
   if (numCellStages === 1) {
     return "#FFFFFF";
   }
 
-  // Calculate color value (0-255) interpolating from white (255) to black (0)
-  const colorValue = Math.round(255 * (1 - stage / (numCellStages - 1)));
+  if (colorScheme === "rainbow") {
+    // For rainbow mode, use HSL with softer, more pleasant colors
+    const hue = Math.round((stage / (numCellStages - 1)) * 280); // Use 280° instead of 360° to avoid harsh reds/magentas
+    const saturation = 65; // Reduced saturation for softer colors
+    const lightness = 70; // Higher lightness for pastel-like appearance
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  } else {
+    // Original greyscale mode
+    // Calculate color value (0-255) interpolating from white (255) to black (0)
+    const colorValue = Math.round(255 * (1 - stage / (numCellStages - 1)));
 
-  // Convert to hex color
-  const hexValue = colorValue.toString(16).padStart(2, "0");
-  return `#${hexValue}${hexValue}${hexValue}`;
+    // Convert to hex color
+    const hexValue = colorValue.toString(16).padStart(2, "0");
+    return `#${hexValue}${hexValue}${hexValue}`;
+  }
 };
 
 // Initialize our 2D array of cells
@@ -70,7 +83,15 @@ const createRules = (numCellStages) => {
 };
 
 // Render the grid of cells as an HTML table
-const Grid = ({ cells, onCellClick, numCellStages, rows, cols, cellSize }) => {
+const Grid = ({
+  cells,
+  onCellClick,
+  numCellStages,
+  rows,
+  cols,
+  cellSize,
+  colorScheme,
+}) => {
   const handleCellClick = (cell) => onCellClick(cell);
 
   // Create the HTML table of cells
@@ -86,7 +107,8 @@ const Grid = ({ cells, onCellClick, numCellStages, rows, cols, cellSize }) => {
           style={{
             backgroundColor: getCellBackgroundColor(
               cells[r][c].stage,
-              numCellStages
+              numCellStages,
+              colorScheme
             ),
             width: cellSize,
             height: cellSize,
@@ -241,6 +263,7 @@ class App extends Component {
       rules: createRules(numCellStages),
       isAutoStepping: false,
       stepInterval: 100, // milliseconds between auto-steps
+      colorScheme: "greyscale", // Default to greyscale
     };
     this.autoStepInterval = null;
   }
@@ -477,6 +500,13 @@ class App extends Component {
     });
   };
 
+  // Handler function for changing color scheme
+  handleColorSchemeChange = (colorScheme) => {
+    this.setState({
+      colorScheme: colorScheme,
+    });
+  };
+
   handleStepForward = () => {
     const updateAllCells = (prevState) => {
       // Make a deep copy of the cells
@@ -563,7 +593,7 @@ class App extends Component {
               id="cell-size-slider"
               className="control-slider"
               type="range"
-              min="5"
+              min="10"
               max="50"
               value={this.state.cellSize}
               onChange={this.handleCellSizeChange}
@@ -584,6 +614,30 @@ class App extends Component {
               onChange={this.handleStagesChange}
             />
           </div>
+
+          <div className="control-group">
+            <label className="control-label">Color Scheme</label>
+            <div className="button-group">
+              <Button
+                onClick={() => this.handleColorSchemeChange("greyscale")}
+                variant={
+                  this.state.colorScheme === "greyscale" ? "primary" : "default"
+                }
+                className="color-scheme-option"
+              >
+                🔲 Greyscale
+              </Button>
+              <Button
+                onClick={() => this.handleColorSchemeChange("rainbow")}
+                variant={
+                  this.state.colorScheme === "rainbow" ? "primary" : "default"
+                }
+                className="color-scheme-option"
+              >
+                🌈 Rainbow
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Grid
@@ -593,6 +647,7 @@ class App extends Component {
           rows={this.state.rows}
           cols={this.state.cols}
           cellSize={this.state.cellSize}
+          colorScheme={this.state.colorScheme}
         />
 
         <div className="controls-layout">
