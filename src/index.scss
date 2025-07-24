@@ -374,6 +374,52 @@ body {
   }
 }
 
+.control-slider {
+  width: 100%;
+  max-width: 200px;
+  height: 6px;
+  border-radius: 3px;
+  background: color(neutral, gray-300);
+  outline: none;
+  margin: spacing(sm) 0;
+  cursor: pointer;
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+  }
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: color(primary);
+    cursor: pointer;
+    border: 2px solid color(neutral, white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    @include dark-mode {
+      background: color(dark, text);
+      border-color: color(dark, bg-primary);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: color(primary);
+    cursor: pointer;
+    border: 2px solid color(neutral, white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    @include dark-mode {
+      background: color(dark, text);
+      border-color: color(dark, bg-primary);
+    }
+  }
+}
+
 // =============================================================================
 // Game Grid
 // =============================================================================
@@ -382,8 +428,12 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: spacing(xl);
-  overflow-x: auto;
+  overflow: hidden;
   padding: spacing(sm);
+  max-width: 640px; // Fixed width to accommodate 600px grid + padding
+  max-height: 440px; // Fixed height to accommodate 400px grid + padding
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .game-grid {
@@ -392,6 +442,8 @@ body {
   background: color(neutral, white);
   border-radius: size(border-radius);
   overflow: hidden;
+  width: 600px; // Fixed grid width
+  height: 400px; // Fixed grid height
 
   @include dark-mode {
     border-color: color(dark, border-light);
@@ -410,21 +462,9 @@ body {
   border: 1px solid color(neutral, gray-300);
   cursor: pointer;
   transition: opacity 0.1s ease;
-  min-width: size(cell-size);
-  min-height: size(cell-size);
 
   &:hover {
     opacity: 0.8;
-  }
-
-  @include respond-below(md) {
-    min-width: size(cell-size-mobile);
-    min-height: size(cell-size-mobile);
-  }
-
-  @include respond-below(sm) {
-    min-width: size(cell-size-xs);
-    min-height: size(cell-size-xs);
   }
 
   @include dark-mode {

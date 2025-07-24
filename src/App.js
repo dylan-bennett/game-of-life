@@ -70,32 +70,7 @@ const createRules = (numCellStages) => {
 };
 
 // Render the grid of cells as an HTML table
-const Grid = ({ cells, onCellClick, numCellStages, rows, cols }) => {
-  const [cellSize, setCellSize] = React.useState(20);
-
-  const calculateCellSize = React.useCallback(() => {
-    const maxWidth = Math.min(window.innerWidth - 80, 600); // Max grid width with padding
-    const maxHeight = Math.min(window.innerHeight * 0.4, 400); // Max grid height
-
-    const cellWidth = Math.max(14, Math.floor(maxWidth / cols));
-    const cellHeight = Math.max(14, Math.floor(maxHeight / rows));
-
-    return Math.min(cellWidth, cellHeight);
-  }, [rows, cols]);
-
-  React.useEffect(() => {
-    const updateCellSize = () => {
-      setCellSize(calculateCellSize());
-    };
-
-    updateCellSize();
-    window.addEventListener("resize", updateCellSize);
-
-    return () => {
-      window.removeEventListener("resize", updateCellSize);
-    };
-  }, [calculateCellSize]);
-
+const Grid = ({ cells, onCellClick, numCellStages, rows, cols, cellSize }) => {
   const handleCellClick = (cell) => onCellClick(cell);
 
   // Create the HTML table of cells
@@ -244,10 +219,21 @@ const RulesControl = ({ rules, onRuleChange }) => {
 class App extends Component {
   constructor(props) {
     super(props);
-    const rows = 10;
-    const cols = 10;
+
+    // Fixed grid dimensions
+    const gridWidth = 600;
+    const gridHeight = 400;
+    const cellSize = 20;
     const numCellStages = 2;
+
+    // Calculate rows and cols based on grid size and cell size
+    const rows = Math.floor(gridHeight / cellSize);
+    const cols = Math.floor(gridWidth / cellSize);
+
     this.state = {
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      cellSize: cellSize,
       rows: rows,
       cols: cols,
       cells: createCells(rows, cols),
@@ -258,6 +244,13 @@ class App extends Component {
     };
     this.autoStepInterval = null;
   }
+
+  // Calculate rows and cols based on grid size and cell size
+  calculateGridDimensions = (cellSize) => {
+    const rows = Math.floor(this.state.gridHeight / cellSize);
+    const cols = Math.floor(this.state.gridWidth / cellSize);
+    return { rows, cols };
+  };
 
   // Increment the cell's stage, wrapping around
   incrementCellStage = (cell) => {
@@ -323,38 +316,30 @@ class App extends Component {
     if (this.state.isAutoStepping) {
       this.stopAutoStepping();
     }
+    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
     this.setState({
       numCellStages: newNumCellStages,
-      cells: createCells(this.state.rows, this.state.cols), // Reset the board when changing stages
+      rows: rows,
+      cols: cols,
+      cells: createCells(rows, cols), // Reset the board when changing stages
       rules: createRules(newNumCellStages), // Reset rules for new stage count
       isAutoStepping: false,
     });
   };
 
-  // Handler function for changing rows
-  handleRowsChange = (event) => {
-    const newRows = parseInt(event.target.value);
+  // Handler function for changing cell size
+  handleCellSizeChange = (event) => {
+    const newCellSize = parseInt(event.target.value);
     // Stop auto-stepping if it's running
     if (this.state.isAutoStepping) {
       this.stopAutoStepping();
     }
+    const { rows, cols } = this.calculateGridDimensions(newCellSize);
     this.setState({
-      rows: newRows,
-      cells: createCells(newRows, this.state.cols),
-      isAutoStepping: false,
-    });
-  };
-
-  // Handler function for changing columns
-  handleColsChange = (event) => {
-    const newCols = parseInt(event.target.value);
-    // Stop auto-stepping if it's running
-    if (this.state.isAutoStepping) {
-      this.stopAutoStepping();
-    }
-    this.setState({
-      cols: newCols,
-      cells: createCells(this.state.rows, newCols),
+      cellSize: newCellSize,
+      rows: rows,
+      cols: cols,
+      cells: createCells(rows, cols),
       isAutoStepping: false,
     });
   };
@@ -541,8 +526,9 @@ class App extends Component {
   };
 
   handleClear = () => {
+    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
     this.setState(() => ({
-      cells: createCells(this.state.rows, this.state.cols),
+      cells: createCells(rows, cols),
     }));
   };
 
@@ -553,8 +539,9 @@ class App extends Component {
         isAutoStepping: false,
       }));
     }
+    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
     this.setState(() => ({
-      cells: createCells(this.state.rows, this.state.cols),
+      cells: createCells(rows, cols),
       rules: createRules(this.state.numCellStages),
     }));
   };
@@ -568,32 +555,18 @@ class App extends Component {
 
         <div className="grid-controls">
           <div className="control-group">
-            <label htmlFor="rows-slider" className="control-label">
-              Rows: {this.state.rows}
+            <label htmlFor="cell-size-slider" className="control-label">
+              Cell Size: {this.state.cellSize}px (Grid: {this.state.rows} ×{" "}
+              {this.state.cols})
             </label>
             <input
-              id="rows-slider"
+              id="cell-size-slider"
               className="control-slider"
               type="range"
               min="5"
-              max="20"
-              value={this.state.rows}
-              onChange={this.handleRowsChange}
-            />
-          </div>
-
-          <div className="control-group">
-            <label htmlFor="cols-slider" className="control-label">
-              Columns: {this.state.cols}
-            </label>
-            <input
-              id="cols-slider"
-              className="control-slider"
-              type="range"
-              min="5"
-              max="20"
-              value={this.state.cols}
-              onChange={this.handleColsChange}
+              max="50"
+              value={this.state.cellSize}
+              onChange={this.handleCellSizeChange}
             />
           </div>
 
@@ -619,6 +592,7 @@ class App extends Component {
           numCellStages={this.state.numCellStages}
           rows={this.state.rows}
           cols={this.state.cols}
+          cellSize={this.state.cellSize}
         />
 
         <div className="controls-layout">
