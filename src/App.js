@@ -143,6 +143,68 @@ const createRules = (numCellStages) => {
   return rules;
 };
 
+// Instructions overlay component
+const InstructionsOverlay = ({ onHide }) => {
+  // Detect if device is mobile
+  const isMobile = "ontouchstart" in window || window.innerWidth < 768;
+
+  const instructionText = isMobile
+    ? "Drag your finger over the grid, then press Start"
+    : "Click and drag over the grid, then click Start";
+
+  return (
+    <div
+      className="instructions-overlay"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        pointerEvents: "none", // Allow clicks to pass through to the grid
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "2rem",
+          borderRadius: "12px",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+          textAlign: "center",
+          maxWidth: "300px",
+          margin: "1rem",
+          border: "2px solid #333",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 1rem 0",
+            color: "#333",
+            fontSize: "1.2rem",
+          }}
+        >
+          Welcome to Game of Life: Evolved!
+        </h3>
+        <p
+          style={{
+            margin: 0,
+            color: "#666",
+            fontSize: "1rem",
+            lineHeight: "1.4",
+          }}
+        >
+          {instructionText}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Canvas-based Grid component for better performance and drag support
 const Grid = ({
   cells,
@@ -152,6 +214,7 @@ const Grid = ({
   cols,
   cellSize,
   colorScheme,
+  onFirstInteraction, // New prop for hiding instructions
 }) => {
   const canvasRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -190,10 +253,22 @@ const Grid = ({
         if (!isDragging || lastDraggedCell !== cellKey) {
           onCellClick(cells[row][col]);
           setLastDraggedCell(cellKey);
+
+          // Call onFirstInteraction to hide instructions
+          if (onFirstInteraction) {
+            onFirstInteraction();
+          }
         }
       }
     },
-    [getCellFromMousePos, isDragging, lastDraggedCell, onCellClick, cells]
+    [
+      getCellFromMousePos,
+      isDragging,
+      lastDraggedCell,
+      onCellClick,
+      cells,
+      onFirstInteraction,
+    ]
   );
 
   // Mouse event handlers
@@ -600,6 +675,7 @@ class App extends Component {
       rows: 0,
       cols: 0,
       isRandomDropdownOpen: false, // New state for dropdown
+      showInstructions: true, // New state for instructions overlay
     };
     this.autoStepInterval = null;
     this.gridContainerRef = React.createRef();
@@ -1013,6 +1089,13 @@ class App extends Component {
     this.setState({ isRandomDropdownOpen: false });
   };
 
+  // Handler to hide instructions on first interaction
+  handleFirstInteraction = () => {
+    if (this.state.showInstructions) {
+      this.setState({ showInstructions: false });
+    }
+  };
+
   render() {
     return (
       <div className="app-container">
@@ -1032,6 +1115,7 @@ class App extends Component {
                 cols={this.state.cols}
                 cellSize={this.state.cellSize}
                 colorScheme={this.state.colorScheme}
+                onFirstInteraction={this.handleFirstInteraction}
               />
             )}
           </div>
@@ -1069,6 +1153,10 @@ class App extends Component {
 
         {this.state.isSidebarOpen && (
           <div className="sidebar-backdrop" onClick={this.handleCloseSidebar} />
+        )}
+
+        {this.state.showInstructions && (
+          <InstructionsOverlay onHide={this.handleFirstInteraction} />
         )}
       </div>
     );
