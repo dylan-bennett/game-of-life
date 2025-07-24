@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSkull,
   faHeart,
-  faDna,
+  faArrowUp,
   faBars,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
@@ -504,7 +504,7 @@ const RulesControl = ({ rules, onRuleChange }) => {
     if (stage === 0) {
       // Stage 0 (dead cells): only die (remain dead) or evolve (birth)
       if (rule === "evolve") {
-        return <FontAwesomeIcon icon={faDna} title="birth" />;
+        return <FontAwesomeIcon icon={faArrowUp} title="birth" />;
       } else if (rule === "die") {
         return <FontAwesomeIcon icon={faSkull} title="remain dead" />;
       }
@@ -520,7 +520,7 @@ const RulesControl = ({ rules, onRuleChange }) => {
       if (rule === "survive") {
         return <FontAwesomeIcon icon={faHeart} title="survive" />;
       } else if (rule === "evolve") {
-        return <FontAwesomeIcon icon={faDna} title="evolve" />;
+        return <FontAwesomeIcon icon={faArrowUp} title="evolve" />;
       } else if (rule === "die") {
         return <FontAwesomeIcon icon={faSkull} title="die" />;
       }

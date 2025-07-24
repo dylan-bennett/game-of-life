@@ -834,7 +834,6 @@ body {
 
   @include dark-mode {
     background: color(dark, bg-quaternary);
-    color: color(dark, text);
     border-color: color(dark, border-light);
   }
 
