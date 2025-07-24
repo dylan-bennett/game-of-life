@@ -1,8 +1,8 @@
 {
-  "name": "game-of-life",
+  "name": "game-of-life-evolved",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://dylan-bennett.github.io/game-of-life",
+  "homepage": "http://dylan-bennett.github.io/game-of-life-evolved",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
