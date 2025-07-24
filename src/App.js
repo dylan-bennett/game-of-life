@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSkull, faHeart, faDna } from "@fortawesome/free-solid-svg-icons";
 
 // Custom Button component to reduce repetition
 const Button = ({
@@ -59,7 +61,9 @@ const createRules = (numCellStages) => {
   for (let stage = 0; stage < numCellStages; stage++) {
     rules[stage] = [];
     for (let neighbors = 0; neighbors <= 8; neighbors++) {
-      rules[stage][neighbors] = "survive";
+      // For stage 0 (dead cells), default to "die" (remain dead)
+      // For other stages, default to "survive"
+      rules[stage][neighbors] = stage === 0 ? "die" : "survive";
     }
   }
   return rules;
@@ -176,17 +180,39 @@ const RulesControl = ({ rules, onRuleChange }) => {
         : "#FFB6C1",
   });
 
-  const getDisplayLabel = (rule, stage) => {
+  const getDisplayIcon = (rule, stage) => {
     if (stage === 0) {
-      // Stage 0 (dead cells): only birth or remain dead
-      return rule === "evolve" ? "birth" : "remain dead";
+      // Stage 0 (dead cells): only die (remain dead) or evolve (birth)
+      if (rule === "evolve") {
+        return <FontAwesomeIcon icon={faDna} title="birth" />;
+      } else if (rule === "die") {
+        return <FontAwesomeIcon icon={faSkull} title="remain dead" />;
+      }
     } else if (stage === numCellStages - 1) {
       // Final stage: only survive or die
-      return rule;
+      if (rule === "survive") {
+        return <FontAwesomeIcon icon={faHeart} title="survive" />;
+      } else if (rule === "die") {
+        return <FontAwesomeIcon icon={faSkull} title="die" />;
+      }
     } else {
       // Middle stages: all three options
-      return rule;
+      if (rule === "survive") {
+        return <FontAwesomeIcon icon={faHeart} title="survive" />;
+      } else if (rule === "evolve") {
+        return <FontAwesomeIcon icon={faDna} title="evolve" />;
+      } else if (rule === "die") {
+        return <FontAwesomeIcon icon={faSkull} title="die" />;
+      }
     }
+  };
+
+  const getTooltipText = (rule, stage, neighbors) => {
+    let actionText = rule;
+    if (stage === 0) {
+      actionText = rule === "evolve" ? "birth" : "remain dead";
+    }
+    return `${neighbors} neighbors: ${actionText}`;
   };
 
   return (
@@ -199,11 +225,13 @@ const RulesControl = ({ rules, onRuleChange }) => {
             {stageRules.map((rule, neighbors) => (
               <button
                 key={neighbors}
-                className="rule-button"
+                className="rule-button rule-button-icon"
                 style={getButtonStyle(rule)}
                 onClick={() => onRuleChange(stage, neighbors)}
+                title={getTooltipText(rule, stage, neighbors)}
               >
-                {neighbors}: {getDisplayLabel(rule, stage)}
+                <span className="neighbor-count">{neighbors}</span>
+                {getDisplayIcon(rule, stage)}
               </button>
             ))}
           </div>
@@ -413,8 +441,8 @@ class App extends Component {
         // Get available rules for this stage
         let availableRules;
         if (stage === 0) {
-          // Stage 0: only "survive" (remain dead) or "evolve" (birth)
-          availableRules = ["survive", "evolve"];
+          // Stage 0: only "die" (remain dead) or "evolve" (birth)
+          availableRules = ["die", "evolve"];
         } else if (stage === prevState.numCellStages - 1) {
           // Final stage: only "survive" or "die"
           availableRules = ["survive", "die"];
@@ -443,8 +471,8 @@ class App extends Component {
   handleRuleChange = (stage, neighbors) => {
     const getAvailableRules = (stage) => {
       if (stage === 0) {
-        // Stage 0: only "survive" (remain dead) or "evolve" (birth)
-        return ["survive", "evolve"];
+        // Stage 0: only "die" (remain dead) or "evolve" (birth)
+        return ["die", "evolve"];
       } else if (stage === this.state.numCellStages - 1) {
         // Final stage: only "survive" or "die"
         return ["survive", "die"];
