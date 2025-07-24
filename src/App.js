@@ -291,17 +291,13 @@ const GameControls = ({ onStep, onToggleAuto, isAutoStepping }) => (
 );
 
 // Component for board action buttons (modify board state)
-const BoardActions = ({
-  onRandomFill,
-  onRandomEvolution,
-  onClear,
-  onReset,
-}) => (
+const BoardActions = ({ onRandomize, onClear, onReset }) => (
   <div className="control-section">
     <h4 className="section-title">Board Actions</h4>
     <div className="button-group">
-      <Button onClick={onRandomFill}>Random Fill</Button>
-      <Button onClick={onRandomEvolution}>Random Evolution</Button>
+      <Button onClick={onRandomize} variant="success">
+        Randomize
+      </Button>
       <Button onClick={onClear}>Clear</Button>
       <Button onClick={onReset}>Reset</Button>
     </div>
@@ -614,6 +610,21 @@ class App extends Component {
     });
   };
 
+  // Handler function for randomize (combines random fill, random evolution, and auto-start)
+  handleRandomize = () => {
+    // First do random fill
+    this.handleRandomFill();
+
+    // Then do random evolution
+    this.handleRandomEvolution();
+
+    // Finally start auto-stepping
+    if (!this.state.isAutoStepping) {
+      this.startAutoStepping();
+      this.setState({ isAutoStepping: true });
+    }
+  };
+
   // Cleanup when component unmounts
   componentWillUnmount() {
     this.stopAutoStepping();
@@ -802,8 +813,7 @@ class App extends Component {
           />
 
           <BoardActions
-            onRandomFill={this.handleRandomFill}
-            onRandomEvolution={this.handleRandomEvolution}
+            onRandomize={this.handleRandomize}
             onClear={this.handleClear}
             onReset={this.handleReset}
           />
