@@ -568,61 +568,48 @@ class App extends Component {
 
         <div className="grid-controls">
           <div className="control-group">
-            <label htmlFor="rows-select" className="control-label">
-              Rows
+            <label htmlFor="rows-slider" className="control-label">
+              Rows: {this.state.rows}
             </label>
-            <select
-              id="rows-select"
-              className="control-select"
+            <input
+              id="rows-slider"
+              className="control-slider"
+              type="range"
+              min="5"
+              max="20"
               value={this.state.rows}
               onChange={this.handleRowsChange}
-            >
-              {[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(
-                (num) => (
-                  <option key={num} value={num}>
-                    {num}
-                  </option>
-                )
-              )}
-            </select>
+            />
           </div>
 
           <div className="control-group">
-            <label htmlFor="cols-select" className="control-label">
-              Columns
+            <label htmlFor="cols-slider" className="control-label">
+              Columns: {this.state.cols}
             </label>
-            <select
-              id="cols-select"
-              className="control-select"
+            <input
+              id="cols-slider"
+              className="control-slider"
+              type="range"
+              min="5"
+              max="20"
               value={this.state.cols}
               onChange={this.handleColsChange}
-            >
-              {[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(
-                (num) => (
-                  <option key={num} value={num}>
-                    {num}
-                  </option>
-                )
-              )}
-            </select>
+            />
           </div>
 
           <div className="control-group">
-            <label htmlFor="stages-select" className="control-label">
-              Cell Stages
+            <label htmlFor="stages-slider" className="control-label">
+              Cell Stages: {this.state.numCellStages}
             </label>
-            <select
-              id="stages-select"
-              className="control-select"
+            <input
+              id="stages-slider"
+              className="control-slider"
+              type="range"
+              min="2"
+              max="8"
               value={this.state.numCellStages}
               onChange={this.handleStagesChange}
-            >
-              {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
