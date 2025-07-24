@@ -216,12 +216,21 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; // Use dynamic viewport height for better mobile support
   width: 100vw;
   background: color(neutral, white);
 
   @include dark-mode {
     background: color(dark, bg-primary);
     color: color(dark, text);
+  }
+
+  // Fallback for mobile browsers that don't support dvh
+  @supports not (height: 100dvh) {
+    @media screen and (max-width: 768px) {
+      height: calc(100vh - env(keyboard-inset-height, 0px));
+      min-height: -webkit-fill-available; // Safari iOS fallback
+    }
   }
 }
 
@@ -303,6 +312,13 @@ body {
   justify-content: center;
   background: color(neutral, gray-50);
   overflow: hidden;
+  // Ensure main content doesn't overflow on mobile
+  min-height: 0;
+
+  @include respond-below(md) {
+    // On mobile, ensure we don't take more space than available
+    flex: 1 1 auto;
+  }
 
   @include dark-mode {
     background: color(dark, bg-primary);
@@ -373,6 +389,11 @@ body {
     padding: spacing(xs) spacing(md);
     height: auto;
     min-height: size(footer-height);
+    // Ensure footer is always visible on mobile
+    position: relative;
+    z-index: 10;
+    // Add safe area padding for mobile devices with notches
+    padding-bottom: max(spacing(xs), env(safe-area-inset-bottom));
   }
 
   @include dark-mode {
