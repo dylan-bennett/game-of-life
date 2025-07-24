@@ -512,6 +512,7 @@ body {
   top: 0;
   right: 0;
   height: 100vh;
+  height: 100dvh; // Use dynamic viewport height for better mobile support
   width: size(sidebar-width);
   background: color(neutral, white);
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
@@ -523,6 +524,14 @@ body {
   @include respond-below(md) {
     width: 100vw;
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  }
+
+  // Fallback for mobile browsers that don't support dvh
+  @supports not (height: 100dvh) {
+    @media screen and (max-width: 768px) {
+      height: calc(100vh - env(keyboard-inset-height, 0px));
+      min-height: -webkit-fill-available; // Safari iOS fallback
+    }
   }
 
   @include dark-mode {
@@ -545,10 +554,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: spacing(xl);
+  min-height: 0; // Allow content to shrink if needed
 
   @include respond-below(md) {
     padding: spacing(lg);
     gap: spacing(lg);
+    // Add safe area padding for mobile devices with notches
+    padding-bottom: max(spacing(lg), env(safe-area-inset-bottom));
   }
 }
 
@@ -725,6 +737,12 @@ body {
 .sidebar-footer {
   margin-top: auto;
   padding-top: spacing(lg);
+  flex-shrink: 0; // Ensure footer doesn't shrink and always stays visible
+
+  @include respond-below(md) {
+    // Ensure extra padding on mobile to prevent cutoff
+    padding-top: spacing(xl);
+  }
 }
 
 .sidebar-reset {
