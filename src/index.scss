@@ -70,11 +70,11 @@ $breakpoints: (
 
 // Component sizes
 $sizes: (
+  header-height: 50px,
+  footer-height: 60px,
+  sidebar-width: 320px,
   button-height: 44px,
-  button-height-mobile: 32px,
-  cell-size: 20px,
-  cell-size-mobile: 16px,
-  cell-size-xs: 14px,
+  button-height-mobile: 40px,
   border-radius: 4px,
   border-radius-lg: 8px,
   border-radius-xl: 12px,
@@ -134,7 +134,7 @@ $sizes: (
     $height: size(button-height);
   }
 
-  padding: spacing(md) spacing(lg);
+  padding: spacing(sm) spacing(lg);
   border: 1px solid color(neutral, gray-300);
   border-radius: size(border-radius-lg);
   background: color(neutral, white);
@@ -158,6 +158,12 @@ $sizes: (
     transform: translateY(1px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
+
+  @include respond-below(md) {
+    min-height: size(button-height-mobile);
+    padding: spacing(xs) spacing(md);
+    font-size: font-size(sm);
+  }
 }
 
 @mixin button-variant($bg-color, $hover-color) {
@@ -171,50 +177,10 @@ $sizes: (
   }
 }
 
-// Card/container mixin
-@mixin card($padding: spacing(xl), $radius: size(border-radius-lg)) {
-  background: color(neutral, white);
-  border-radius: $radius;
-  padding: $padding;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-// Section mixin
-@mixin section($bg: color(neutral, gray-50)) {
-  padding: spacing(lg);
-  background: $bg;
-  border-radius: size(border-radius-lg);
-  border: 1px solid color(neutral, gray-200);
-}
-
-// Grid mixin
-@mixin grid($columns: 1, $gap: spacing(xl)) {
-  display: grid;
-  gap: $gap;
-  grid-template-columns: repeat($columns, 1fr);
-}
-
-// Flex utilities
-@mixin flex($direction: row, $gap: spacing(sm), $wrap: wrap) {
-  display: flex;
-  flex-direction: $direction;
-  gap: $gap;
-  flex-wrap: $wrap;
-}
-
 // Dark mode mixin
 @mixin dark-mode {
   @media (prefers-color-scheme: dark) {
     @content;
-  }
-}
-
-// Touch-friendly sizing
-@mixin touch-friendly {
-  min-height: size(button-height);
-
-  @include respond-below(md) {
-    min-height: size(button-height-mobile);
   }
 }
 
@@ -234,15 +200,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: color(neutral, gray-100);
-  padding: spacing(lg);
-
-  @include respond-above(lg) {
-    padding: spacing(2xl);
-  }
-
-  @include respond-below(md) {
-    padding: spacing(sm);
-  }
+  overflow: hidden; // Prevent body scroll since we want app to fill viewport
 
   @include dark-mode {
     background-color: color(dark, bg-primary);
@@ -251,22 +209,15 @@ body {
 }
 
 // =============================================================================
-// Main App Structure
+// Main App Layout
 // =============================================================================
 
 .app-container {
-  max-width: breakpoint(xl);
-  margin: 0 auto;
-  @include card(spacing(xl), size(border-radius-xl));
-
-  @include respond-above(md) {
-    padding: spacing(2xl);
-  }
-
-  @include respond-below(md) {
-    padding: spacing(lg);
-    border-radius: size(border-radius-lg);
-  }
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: color(neutral, white);
 
   @include dark-mode {
     background: color(dark, bg-primary);
@@ -274,114 +225,384 @@ body {
   }
 }
 
+// =============================================================================
+// Header
+// =============================================================================
+
 .app-header {
-  text-align: center;
-  margin-bottom: spacing(2xl);
-}
-
-.app-title {
-  font-size: font-size(3xl);
-  color: color(neutral, gray-800);
-  margin: 0;
-  font-weight: font-weight(semibold);
-
-  @include respond-above(md) {
-    font-size: font-size(4xl);
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: spacing(sm) spacing(lg);
+  height: size(header-height);
+  background: color(neutral, white);
+  border-bottom: 1px solid color(neutral, gray-200);
+  flex-shrink: 0;
 
   @include respond-below(md) {
-    font-size: font-size(2xl);
-  }
-
-  @include respond-below(sm) {
-    font-size: font-size(xl);
-  }
-
-  @include dark-mode {
-    color: color(dark, text);
-  }
-}
-
-// =============================================================================
-// Grid Controls
-// =============================================================================
-
-.grid-controls {
-  @include flex(row, spacing(lg));
-  margin-bottom: spacing(xl);
-  @include section();
-  justify-content: center;
-
-  @include respond-above(md) {
-    flex-wrap: nowrap;
-  }
-
-  @include respond-below(md) {
-    gap: spacing(md);
-  }
-
-  @include respond-below(sm) {
-    flex-direction: column;
-    gap: spacing(sm);
+    padding: spacing(xs) spacing(md);
+    height: auto;
+    min-height: size(header-height);
   }
 
   @include dark-mode {
     background: color(dark, bg-secondary);
-    border-color: color(dark, border);
+    border-bottom-color: color(dark, border);
   }
 }
 
-.control-group {
-  @include flex(column, spacing(xs));
-  min-width: 120px;
-
-  @include respond-above(md) {
-    min-width: 140px;
-  }
+.app-title {
+  font-size: font-size(xl);
+  color: color(neutral, gray-800);
+  margin: 0;
+  font-weight: font-weight(semibold);
 
   @include respond-below(md) {
-    min-width: 100px;
-    flex: 1;
+    font-size: font-size(lg);
   }
 
   @include respond-below(sm) {
-    min-width: auto;
+    font-size: font-size(base);
   }
-}
-
-.control-label {
-  font-size: font-size(base);
-  font-weight: font-weight(medium);
-  color: color(neutral, gray-700);
 
   @include dark-mode {
     color: color(dark, text);
   }
 }
 
-.control-select {
-  padding: spacing(sm);
-  border: 1px solid color(neutral, gray-300);
-  border-radius: size(border-radius);
-  font-size: font-size(lg);
-  background: color(neutral, white);
-  @include touch-friendly();
+.sidebar-toggle {
+  @include button-base();
+  min-width: auto;
+  padding: spacing(xs);
+  min-height: 36px;
+
+  @include respond-below(md) {
+    padding: spacing(xs);
+    min-height: 32px;
+  }
 
   @include dark-mode {
     background: color(dark, bg-tertiary);
     color: color(dark, text);
     border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
   }
 }
 
-.control-slider {
+// =============================================================================
+// Main Content Area
+// =============================================================================
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color(neutral, gray-50);
+  overflow: hidden;
+
+  @include dark-mode {
+    background: color(dark, bg-primary);
+  }
+}
+
+.grid-container {
   width: 100%;
-  max-width: 200px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-grid {
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  // Ensure crisp pixel rendering for the canvas
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  @include dark-mode {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  // Touch-friendly interactions
+  @media (hover: none) and (pointer: coarse) {
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// =============================================================================
+// Footer
+// =============================================================================
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: spacing(sm) spacing(lg);
+  height: size(footer-height);
+  background: color(neutral, white);
+  border-top: 1px solid color(neutral, gray-200);
+  flex-shrink: 0;
+
+  @include respond-below(md) {
+    padding: spacing(xs) spacing(md);
+    height: auto;
+    min-height: size(footer-height);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    border-top-color: color(dark, border);
+  }
+}
+
+.footer-button {
+  @include button-base();
+
+  @include respond-below(md) {
+    min-width: 70px;
+    padding: spacing(xs) spacing(sm);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+.footer-center {
+  display: flex;
+  gap: spacing(sm);
+  align-items: center;
+}
+
+// Random dropdown styles
+.random-dropdown {
+  position: relative;
+}
+
+.random-button {
+  display: flex;
+  align-items: center;
+  gap: spacing(xs);
+}
+
+.dropdown-arrow {
+  font-size: font-size(xs);
+  transition: transform 0.2s ease;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}
+
+.dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: color(neutral, white);
+  border: 1px solid color(neutral, gray-300);
+  border-radius: size(border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: spacing(xs);
+  z-index: 1000;
+  min-width: 140px;
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    border-color: color(dark, border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: spacing(sm) spacing(md);
+  border: none;
+  background: none;
+  color: color(neutral, gray-800);
+  font-size: font-size(sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:first-child {
+    border-radius: size(border-radius) size(border-radius) 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 size(border-radius) size(border-radius);
+  }
+
+  &:only-child {
+    border-radius: size(border-radius);
+  }
+
+  &:hover {
+    background: color(neutral, gray-50);
+  }
+
+  @include dark-mode {
+    color: color(dark, text);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+// =============================================================================
+// Sidebar
+// =============================================================================
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: size(sidebar-width);
+  background: color(neutral, white);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+
+  @include respond-below(md) {
+    width: 100vw;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+
+    @include respond-below(md) {
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  &.sidebar-open {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-content {
+  padding: spacing(xl);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: spacing(xl);
+
+  @include respond-below(md) {
+    padding: spacing(lg);
+    gap: spacing(lg);
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: spacing(md);
+  border-bottom: 1px solid color(neutral, gray-200);
+
+  h3 {
+    margin: 0;
+    font-size: font-size(xl);
+    font-weight: font-weight(semibold);
+    color: color(neutral, gray-800);
+
+    @include dark-mode {
+      color: color(dark, text);
+    }
+  }
+
+  @include dark-mode {
+    border-bottom-color: color(dark, border);
+  }
+}
+
+.sidebar-close {
+  @include button-base();
+  min-width: auto;
+  padding: spacing(xs);
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: spacing(sm);
+}
+
+.sidebar-section-title {
+  font-size: font-size(base);
+  font-weight: font-weight(semibold);
+  color: color(neutral, gray-800);
+  margin: 0;
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+.sidebar-label {
+  font-size: font-size(sm);
+  color: color(neutral, gray-600);
+  margin: 0;
+
+  @include dark-mode {
+    color: color(dark, text);
+  }
+}
+
+.sidebar-slider {
+  width: 100%;
   height: 6px;
   border-radius: 3px;
   background: color(neutral, gray-300);
   outline: none;
-  margin: spacing(sm) 0;
   cursor: pointer;
 
   @include dark-mode {
@@ -420,130 +641,152 @@ body {
   }
 }
 
-// =============================================================================
-// Game Grid
-// =============================================================================
-
-.grid-container {
+.sidebar-button-group {
   display: flex;
-  justify-content: center;
-  margin-bottom: spacing(xl);
+  gap: spacing(xs);
+  flex-wrap: wrap;
+}
+
+.sidebar-color-button {
+  @include button-base();
+  flex: 1;
+  min-width: 0;
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: spacing(lg);
+}
+
+.sidebar-reset {
+  @include button-base();
+  width: 100%;
+
+  @include dark-mode {
+    background: color(dark, bg-tertiary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+
+    &:hover {
+      background: color(dark, bg-quaternary);
+    }
+  }
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  cursor: pointer;
+}
+
+// =============================================================================
+// Rules Control (Compact for Sidebar)
+// =============================================================================
+
+.rules-control {
+  display: flex;
+  flex-direction: column;
+  gap: spacing(md);
+}
+
+.rules-stage-compact {
+  display: flex;
+  flex-direction: column;
+  gap: spacing(xs);
   padding: spacing(sm);
-  margin-left: auto;
-  margin-right: auto;
-
-  // Responsive container sizing
-  @include respond-above(lg) {
-    max-width: 640px; // For larger screens, limit container width
-  }
-
-  @include respond-below(md) {
-    padding: spacing(xs);
-    margin-bottom: spacing(lg);
-  }
-
-  @include respond-below(sm) {
-    padding: 0;
-    overflow-x: auto; // Allow horizontal scroll on very small screens
-  }
-}
-
-.game-grid {
+  background: color(neutral, gray-50);
   border-radius: size(border-radius);
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: box-shadow 0.2s ease;
-
-  // Ensure crisp pixel rendering for the canvas
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-
-  &:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  }
+  border: 1px solid color(neutral, gray-200);
 
   @include dark-mode {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-    &:hover {
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    }
-  }
-
-  // Responsive canvas sizing
-  @include respond-below(md) {
-    max-width: 100%;
-    height: auto;
-  }
-
-  // Touch-friendly interactions
-  @media (hover: none) and (pointer: coarse) {
-    // On touch devices, remove hover effects and ensure smooth touch interactions
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    // Prevent text selection and callouts on touch
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-
-    // Smooth scrolling for touch devices
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-// =============================================================================
-// Controls Layout
-// =============================================================================
-
-.controls-layout {
-  @include grid(1, spacing(xl));
-
-  @include respond-above(md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include respond-above(lg) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.control-section {
-  @include section();
-
-  @include dark-mode {
-    background: color(dark, bg-secondary);
+    background: color(dark, bg-tertiary);
     border-color: color(dark, border);
   }
 }
 
-.section-title {
-  margin: 0 0 spacing(md) 0;
-  font-size: font-size(lg);
-  font-weight: font-weight(semibold);
-  color: color(neutral, gray-800);
+.stage-header-compact {
+  font-size: font-size(sm);
+  font-weight: font-weight(medium);
+  color: color(neutral, gray-700);
+  margin-bottom: spacing(xs);
 
   @include dark-mode {
     color: color(dark, text);
   }
 }
 
-.button-group {
-  @include flex(row, spacing(sm));
+.rules-buttons-compact {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 2px;
+}
+
+.rule-button-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 1px solid color(neutral, gray-400);
+  border-radius: size(border-radius);
+  cursor: pointer;
+  font-size: font-size(xs);
+  min-height: 32px;
+  transition: all 0.2s ease;
 
   @include respond-below(md) {
-    gap: spacing(xs);
+    min-height: 28px;
+    font-size: 10px;
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-quaternary);
+    color: color(dark, text);
+    border-color: color(dark, border-light);
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.neighbor-count-compact {
+  font-weight: font-weight(semibold);
+  line-height: 1;
+}
+
+.rule-icon-compact {
+  font-size: font-size(xs);
+  line-height: 1;
+
+  svg {
+    width: 8px;
+    height: 8px;
   }
 }
 
 // =============================================================================
-// Buttons
+// Button Styles
 // =============================================================================
 
 .app-button {
@@ -557,13 +800,6 @@ body {
     @include button-variant(color(success), color(success-hover));
   }
 
-  @include respond-below(md) {
-    padding: spacing(sm) spacing(md);
-    font-size: font-size(sm);
-    min-width: 70px;
-    min-height: size(button-height-mobile);
-  }
-
   @include dark-mode {
     background: color(dark, bg-tertiary);
     color: color(dark, text);
@@ -571,145 +807,6 @@ body {
 
     &:hover {
       background: color(dark, bg-quaternary);
-    }
-  }
-}
-
-// =============================================================================
-// Speed Control
-// =============================================================================
-
-.speed-control {
-  @include flex(column, spacing(sm));
-}
-
-.speed-slider {
-  width: 100%;
-  max-width: 300px;
-  height: 6px;
-  border-radius: 3px;
-  background: color(neutral, gray-300);
-  outline: none;
-  margin: spacing(sm) 0;
-}
-
-.speed-info {
-  font-size: font-size(sm);
-  color: color(neutral, gray-600);
-  margin: 0;
-
-  @include dark-mode {
-    color: color(dark, text);
-  }
-}
-
-// =============================================================================
-// Rules Section
-// =============================================================================
-
-.rules-section {
-  margin-top: spacing(lg);
-}
-
-.rules-stage {
-  margin-bottom: spacing(lg);
-  padding: spacing(lg);
-  background: color(neutral, white);
-  border-radius: size(border-radius-lg);
-  border: 1px solid color(neutral, gray-300);
-
-  @include dark-mode {
-    background: color(dark, bg-secondary);
-    border-color: color(dark, border);
-  }
-}
-
-.stage-header {
-  font-weight: font-weight(semibold);
-  margin-bottom: spacing(sm);
-  color: color(neutral, gray-800);
-  font-size: font-size(base);
-
-  @include dark-mode {
-    color: color(dark, text);
-  }
-}
-
-.rules-buttons {
-  @include flex(row, 4px);
-
-  @include respond-below(md) {
-    gap: 2px;
-  }
-}
-
-.rule-button {
-  margin: 0;
-  padding: spacing(xs) spacing(sm);
-  border: 1px solid color(neutral, gray-400);
-  border-radius: size(border-radius);
-  cursor: pointer;
-  min-width: 70px;
-  font-size: font-size(sm);
-  text-align: center;
-  transition: all 0.2s ease;
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  @include respond-below(md) {
-    min-width: 60px;
-    font-size: font-size(xs);
-    padding: spacing(xs);
-    min-height: size(button-height-mobile);
-  }
-
-  @include dark-mode {
-    background: color(dark, bg-tertiary);
-    color: color(dark, text);
-    border-color: color(dark, border-light);
-  }
-
-  // Icon-only button styles
-  &.rule-button-icon {
-    flex-direction: column;
-    gap: spacing(xs);
-    padding: spacing(xs);
-    min-width: 50px;
-    min-height: 44px;
-
-    @include respond-below(md) {
-      min-width: 42px;
-      min-height: 38px;
-      gap: 2px;
-    }
-
-    .neighbor-count {
-      font-size: font-size(xs);
-      font-weight: font-weight(semibold);
-      line-height: 1;
-
-      @include respond-below(md) {
-        font-size: 10px;
-      }
-    }
-
-    svg {
-      font-size: font-size(sm);
-
-      @include respond-below(md) {
-        font-size: font-size(xs);
-      }
-    }
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    &:active {
-      transform: translateY(0);
     }
   }
 }

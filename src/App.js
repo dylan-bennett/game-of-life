@@ -6,7 +6,13 @@ import React, {
   useCallback,
 } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSkull, faHeart, faDna } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSkull,
+  faHeart,
+  faDna,
+  faBars,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 
 // Custom Button component to reduce repetition
 const Button = ({
@@ -80,9 +86,23 @@ const createRules = (numCellStages) => {
   for (let stage = 0; stage < numCellStages; stage++) {
     rules[stage] = [];
     for (let neighbors = 0; neighbors <= 8; neighbors++) {
-      // For stage 0 (dead cells), default to "die" (remain dead)
-      // For other stages, default to "survive"
-      rules[stage][neighbors] = stage === 0 ? "die" : "survive";
+      if (stage === 0) {
+        // Stage 0 (dead cells): Classic GoL birth rule - exactly 3 neighbors
+        rules[stage][neighbors] = neighbors === 3 ? "evolve" : "die";
+      } else if (stage === numCellStages - 1) {
+        // Final stage: Classic GoL survival rule - 2 or 3 neighbors
+        rules[stage][neighbors] =
+          neighbors === 2 || neighbors === 3 ? "survive" : "die";
+      } else {
+        // Middle stages: default to survive for 2-3 neighbors, evolve for others
+        if (neighbors === 2 || neighbors === 3) {
+          rules[stage][neighbors] = "survive";
+        } else if (neighbors === 4) {
+          rules[stage][neighbors] = "evolve";
+        } else {
+          rules[stage][neighbors] = "die";
+        }
+      }
     }
   }
   return rules;
@@ -250,61 +270,114 @@ const Grid = ({
   const canvasHeight = rows * cellSize;
 
   return (
-    <div className="grid-container">
-      <canvas
-        ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        className="game-grid"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          border: "2px solid #333",
-          cursor: isDragging ? "crosshair" : "pointer",
-        }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={canvasWidth}
+      height={canvasHeight}
+      className="game-grid"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        border: "2px solid #333",
+        cursor: isDragging ? "crosshair" : "pointer",
+      }}
+    />
   );
 };
 
-// Component for game control buttons (simulation flow)
-const GameControls = ({ onStep, onToggleAuto, isAutoStepping }) => (
-  <div className="control-section">
-    <h4 className="section-title">Simulation Controls</h4>
-    <div className="button-group">
-      <Button onClick={onStep} variant="primary">
+// Header component
+const Header = ({ onToggleSidebar, isSidebarOpen }) => (
+  <header className="app-header">
+    <h1 className="app-title">Game of Life: Evolved</h1>
+    <Button
+      onClick={onToggleSidebar}
+      className="sidebar-toggle"
+      variant="default"
+    >
+      <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} />
+    </Button>
+  </header>
+);
+
+// Random dropdown menu component
+const RandomDropdown = ({
+  isOpen,
+  onToggle,
+  onRandomFill,
+  onRandomRules,
+  onRandomEverything,
+}) => (
+  <div className="random-dropdown">
+    <Button
+      onClick={onToggle}
+      variant="success"
+      className="footer-button random-button"
+    >
+      Random
+      <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▲</span>
+    </Button>
+    {isOpen && (
+      <div className="dropdown-menu">
+        <button className="dropdown-item" onClick={onRandomFill}>
+          Random Fill
+        </button>
+        <button className="dropdown-item" onClick={onRandomRules}>
+          Random Rules
+        </button>
+        <button className="dropdown-item" onClick={onRandomEverything}>
+          Random Everything
+        </button>
+      </div>
+    )}
+  </div>
+);
+
+// Footer component with main control buttons
+const Footer = ({
+  onStep,
+  onToggleAuto,
+  isAutoStepping,
+  onRandomFill,
+  onRandomRules,
+  onRandomEverything,
+  onClear,
+  isRandomDropdownOpen,
+  onToggleRandomDropdown,
+}) => (
+  <footer className="app-footer">
+    <Button onClick={onClear} variant="default" className="footer-button">
+      Clear
+    </Button>
+
+    <div className="footer-center">
+      <Button onClick={onStep} variant="primary" className="footer-button">
         Step
       </Button>
       <Button
         onClick={onToggleAuto}
         variant={isAutoStepping ? "default" : "success"}
+        className="footer-button"
       >
         {isAutoStepping ? "Stop" : "Start"}
       </Button>
     </div>
-  </div>
+
+    <RandomDropdown
+      isOpen={isRandomDropdownOpen}
+      onToggle={onToggleRandomDropdown}
+      onRandomFill={onRandomFill}
+      onRandomRules={onRandomRules}
+      onRandomEverything={onRandomEverything}
+    />
+  </footer>
 );
 
-// Component for board action buttons (modify board state)
-const BoardActions = ({ onRandomize, onClear, onReset }) => (
-  <div className="control-section">
-    <h4 className="section-title">Board Actions</h4>
-    <div className="button-group">
-      <Button onClick={onRandomize} variant="success">
-        Randomize
-      </Button>
-      <Button onClick={onClear}>Clear</Button>
-      <Button onClick={onReset}>Reset</Button>
-    </div>
-  </div>
-);
-
-// Component for rendering the rules UI
+// Component for rendering the rules UI (compact for sidebar)
 const RulesControl = ({ rules, onRuleChange }) => {
   const numCellStages = rules.length;
 
@@ -353,22 +426,24 @@ const RulesControl = ({ rules, onRuleChange }) => {
   };
 
   return (
-    <div>
-      <h3 className="section-title">Cell Evolution Rules</h3>
+    <div className="rules-control">
+      <h4 className="sidebar-section-title">Rules</h4>
       {rules.map((stageRules, stage) => (
-        <div key={stage} className="rules-stage">
-          <div className="stage-header">Stage {stage} → (neighbors: 0-8)</div>
-          <div className="rules-buttons">
+        <div key={stage} className="rules-stage-compact">
+          <div className="stage-header-compact">Stage {stage}</div>
+          <div className="rules-buttons-compact">
             {stageRules.map((rule, neighbors) => (
               <button
                 key={neighbors}
-                className="rule-button rule-button-icon"
+                className="rule-button-compact"
                 style={getButtonStyle(rule)}
                 onClick={() => onRuleChange(stage, neighbors)}
                 title={getTooltipText(rule, stage, neighbors)}
               >
-                <span className="neighbor-count">{neighbors}</span>
-                {getDisplayIcon(rule, stage)}
+                <span className="neighbor-count-compact">{neighbors}</span>
+                <span className="rule-icon-compact">
+                  {getDisplayIcon(rule, stage)}
+                </span>
               </button>
             ))}
           </div>
@@ -378,41 +453,171 @@ const RulesControl = ({ rules, onRuleChange }) => {
   );
 };
 
+// Sidebar component
+const Sidebar = ({
+  isOpen,
+  onClose,
+  cellSize,
+  onCellSizeChange,
+  numCellStages,
+  onStagesChange,
+  speed,
+  onSpeedChange,
+  rules,
+  onRuleChange,
+  onReset,
+  colorScheme,
+  onColorSchemeChange,
+  rows,
+  cols,
+}) => (
+  <div className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
+    <div className="sidebar-content">
+      <div className="sidebar-header">
+        <h3>Controls</h3>
+        <Button onClick={onClose} className="sidebar-close">
+          <FontAwesomeIcon icon={faTimes} />
+        </Button>
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-section-title">Cell Size</h4>
+        <label className="sidebar-label">
+          {cellSize}px (Grid: {rows} × {cols})
+        </label>
+        <input
+          className="sidebar-slider"
+          type="range"
+          min="15"
+          max="50"
+          value={cellSize}
+          onChange={onCellSizeChange}
+        />
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-section-title">Stages</h4>
+        <label className="sidebar-label">{numCellStages}</label>
+        <input
+          className="sidebar-slider"
+          type="range"
+          min="2"
+          max="8"
+          value={numCellStages}
+          onChange={onStagesChange}
+        />
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-section-title">Speed</h4>
+        <label className="sidebar-label">Speed: {speed}</label>
+        <input
+          className="sidebar-slider"
+          type="range"
+          min="1"
+          max="20"
+          value={speed}
+          onChange={onSpeedChange}
+        />
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-section-title">Color Scheme</h4>
+        <div className="sidebar-button-group">
+          <Button
+            onClick={() => onColorSchemeChange("greyscale")}
+            variant={colorScheme === "greyscale" ? "primary" : "default"}
+            className="sidebar-color-button"
+          >
+            Greyscale
+          </Button>
+          <Button
+            onClick={() => onColorSchemeChange("rainbow")}
+            variant={colorScheme === "rainbow" ? "primary" : "default"}
+            className="sidebar-color-button"
+          >
+            Rainbow
+          </Button>
+        </div>
+      </div>
+
+      <RulesControl rules={rules} onRuleChange={onRuleChange} />
+
+      <div className="sidebar-footer">
+        <Button onClick={onReset} variant="default" className="sidebar-reset">
+          Reset
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
 class App extends Component {
   constructor(props) {
     super(props);
 
-    // Fixed grid dimensions
-    const gridWidth = 600;
-    const gridHeight = 400;
-    const cellSize = 20;
-    const numCellStages = 2;
-
-    // Calculate rows and cols based on grid size and cell size
-    const rows = Math.floor(gridHeight / cellSize);
-    const cols = Math.floor(gridWidth / cellSize);
-
     this.state = {
-      gridWidth: gridWidth,
-      gridHeight: gridHeight,
-      cellSize: cellSize,
-      rows: rows,
-      cols: cols,
-      cells: createCells(rows, cols),
-      numCellStages: numCellStages,
-      rules: createRules(numCellStages),
+      numCellStages: 2,
+      rules: createRules(2),
       isAutoStepping: false,
-      stepInterval: 100, // milliseconds between auto-steps
+      speed: 18, // Speed scale from 1 (slowest) to 20 (fastest), default relatively fast
       colorScheme: "greyscale", // Default to greyscale
+      isSidebarOpen: false,
+      // Grid will be calculated dynamically based on available space
+      cellSize: 20,
+      cells: [],
+      rows: 0,
+      cols: 0,
+      isRandomDropdownOpen: false, // New state for dropdown
     };
     this.autoStepInterval = null;
+    this.gridContainerRef = React.createRef();
   }
 
-  // Calculate rows and cols based on grid size and cell size
-  calculateGridDimensions = (cellSize) => {
-    const rows = Math.floor(this.state.gridHeight / cellSize);
-    const cols = Math.floor(this.state.gridWidth / cellSize);
-    return { rows, cols };
+  componentDidMount() {
+    this.calculateGridSize();
+    window.addEventListener("resize", this.calculateGridSize);
+    document.addEventListener("click", this.handleClickOutside);
+  }
+
+  componentWillUnmount() {
+    this.stopAutoStepping();
+    window.removeEventListener("resize", this.calculateGridSize);
+    document.removeEventListener("click", this.handleClickOutside);
+  }
+
+  // Handler for clicking outside the dropdown
+  handleClickOutside = (event) => {
+    if (
+      this.state.isRandomDropdownOpen &&
+      !event.target.closest(".random-dropdown")
+    ) {
+      this.setState({ isRandomDropdownOpen: false });
+    }
+  };
+
+  // Calculate grid dimensions based on available space
+  calculateGridSize = () => {
+    if (!this.gridContainerRef.current) return;
+
+    const container = this.gridContainerRef.current;
+    const rect = container.getBoundingClientRect();
+
+    // Use the full available space - no padding
+    const availableWidth = rect.width;
+    const availableHeight = rect.height;
+
+    const cols = Math.ceil(availableWidth / this.state.cellSize);
+    const rows = Math.ceil(availableHeight / this.state.cellSize);
+
+    // Only update if dimensions have changed
+    if (cols !== this.state.cols || rows !== this.state.rows) {
+      this.setState({
+        cols: Math.max(1, cols),
+        rows: Math.max(1, rows),
+        cells: createCells(Math.max(1, rows), Math.max(1, cols)),
+      });
+    }
   };
 
   // Increment the cell's stage, wrapping around
@@ -479,12 +684,9 @@ class App extends Component {
     if (this.state.isAutoStepping) {
       this.stopAutoStepping();
     }
-    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
     this.setState({
       numCellStages: newNumCellStages,
-      rows: rows,
-      cols: cols,
-      cells: createCells(rows, cols), // Reset the board when changing stages
+      cells: createCells(this.state.rows, this.state.cols), // Reset the board when changing stages
       rules: createRules(newNumCellStages), // Reset rules for new stage count
       isAutoStepping: false,
     });
@@ -497,21 +699,29 @@ class App extends Component {
     if (this.state.isAutoStepping) {
       this.stopAutoStepping();
     }
-    const { rows, cols } = this.calculateGridDimensions(newCellSize);
-    this.setState({
-      cellSize: newCellSize,
-      rows: rows,
-      cols: cols,
-      cells: createCells(rows, cols),
-      isAutoStepping: false,
-    });
+    this.setState(
+      {
+        cellSize: newCellSize,
+        isAutoStepping: false,
+      },
+      () => {
+        // Recalculate grid after cellSize changes
+        this.calculateGridSize();
+      }
+    );
+  };
+
+  // Convert speed (1-20) to interval in milliseconds
+  getIntervalFromSpeed = (speed) => {
+    // Speed 1 = 1000ms (slowest), Speed 20 = 50ms (fastest)
+    return 1050 - speed * 50;
   };
 
   // Start auto-stepping
   startAutoStepping = () => {
     this.autoStepInterval = setInterval(() => {
       this.handleStepForward();
-    }, this.state.stepInterval);
+    }, this.getIntervalFromSpeed(this.state.speed));
   };
 
   // Stop auto-stepping
@@ -523,8 +733,8 @@ class App extends Component {
   };
 
   // Handler function for changing step interval
-  handleIntervalChange = (event) => {
-    const newInterval = parseInt(event.target.value);
+  handleSpeedChange = (event) => {
+    const newSpeed = parseInt(event.target.value);
     const wasAutoStepping = this.state.isAutoStepping;
 
     // If currently auto-stepping, restart with new interval
@@ -532,7 +742,7 @@ class App extends Component {
       this.stopAutoStepping();
     }
 
-    this.setState({ stepInterval: newInterval }, () => {
+    this.setState({ speed: newSpeed }, () => {
       if (wasAutoStepping) {
         this.startAutoStepping();
       }
@@ -625,11 +835,6 @@ class App extends Component {
     }
   };
 
-  // Cleanup when component unmounts
-  componentWillUnmount() {
-    this.stopAutoStepping();
-  }
-
   // Handler function for changing rule values
   handleRuleChange = (stage, neighbors) => {
     const getAvailableRules = (stage) => {
@@ -683,11 +888,6 @@ class App extends Component {
           } else if (rule === "evolve") {
             newCells[r][c] = this.incrementCellStage(newCells[r][c]);
           }
-
-          // Update the cell's neighbours on the new state
-          // TODO: My plan is to use this to track the number of neighbours of each cell,
-          // so that I can use it to calculate the next stage of the cell.
-          // newCells[r][c].neighbours = numNeighbours;
         }
       }
 
@@ -711,9 +911,10 @@ class App extends Component {
   };
 
   handleClear = () => {
-    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
+    this.stopAutoStepping();
     this.setState(() => ({
-      cells: createCells(rows, cols),
+      cells: createCells(this.state.rows, this.state.cols),
+      isAutoStepping: false,
     }));
   };
 
@@ -724,126 +925,109 @@ class App extends Component {
         isAutoStepping: false,
       }));
     }
-    const { rows, cols } = this.calculateGridDimensions(this.state.cellSize);
     this.setState(() => ({
-      cells: createCells(rows, cols),
+      cells: createCells(this.state.rows, this.state.cols),
       rules: createRules(this.state.numCellStages),
     }));
+  };
+
+  handleToggleSidebar = () => {
+    this.setState((prevState) => ({
+      isSidebarOpen: !prevState.isSidebarOpen,
+    }));
+  };
+
+  handleCloseSidebar = () => {
+    this.setState({ isSidebarOpen: false });
+  };
+
+  // Handler for toggling the random dropdown
+  handleToggleRandomDropdown = () => {
+    this.setState((prevState) => ({
+      isRandomDropdownOpen: !prevState.isRandomDropdownOpen,
+    }));
+  };
+
+  // Handler for random fill from dropdown
+  handleRandomFillFromDropdown = () => {
+    this.handleRandomFill();
+    this.setState({ isRandomDropdownOpen: false });
+  };
+
+  // Handler for random rules from dropdown
+  handleRandomRulesFromDropdown = () => {
+    this.handleRandomEvolution();
+    this.setState({ isRandomDropdownOpen: false });
+  };
+
+  // Handler for random everything from dropdown
+  handleRandomEverythingFromDropdown = () => {
+    this.handleRandomFill();
+    this.handleRandomEvolution();
+    if (!this.state.isAutoStepping) {
+      this.startAutoStepping();
+      this.setState({ isAutoStepping: true });
+    }
+    this.setState({ isRandomDropdownOpen: false });
   };
 
   render() {
     return (
       <div className="app-container">
-        <header className="app-header">
-          <h1 className="app-title">Game of Life</h1>
-        </header>
-
-        <div className="grid-controls">
-          <div className="control-group">
-            <label htmlFor="cell-size-slider" className="control-label">
-              Cell Size: {this.state.cellSize}px (Grid: {this.state.rows} ×{" "}
-              {this.state.cols})
-            </label>
-            <input
-              id="cell-size-slider"
-              className="control-slider"
-              type="range"
-              min="10"
-              max="50"
-              value={this.state.cellSize}
-              onChange={this.handleCellSizeChange}
-            />
-          </div>
-
-          <div className="control-group">
-            <label htmlFor="stages-slider" className="control-label">
-              Cell Stages: {this.state.numCellStages}
-            </label>
-            <input
-              id="stages-slider"
-              className="control-slider"
-              type="range"
-              min="2"
-              max="8"
-              value={this.state.numCellStages}
-              onChange={this.handleStagesChange}
-            />
-          </div>
-
-          <div className="control-group">
-            <label className="control-label">Color Scheme</label>
-            <div className="button-group">
-              <Button
-                onClick={() => this.handleColorSchemeChange("greyscale")}
-                variant={
-                  this.state.colorScheme === "greyscale" ? "primary" : "default"
-                }
-                className="color-scheme-option"
-              >
-                🔲 Greyscale
-              </Button>
-              <Button
-                onClick={() => this.handleColorSchemeChange("rainbow")}
-                variant={
-                  this.state.colorScheme === "rainbow" ? "primary" : "default"
-                }
-                className="color-scheme-option"
-              >
-                🌈 Rainbow
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Grid
-          cells={this.state.cells}
-          onCellClick={this.handleCellClick}
-          numCellStages={this.state.numCellStages}
-          rows={this.state.rows}
-          cols={this.state.cols}
-          cellSize={this.state.cellSize}
-          colorScheme={this.state.colorScheme}
+        <Header
+          onToggleSidebar={this.handleToggleSidebar}
+          isSidebarOpen={this.state.isSidebarOpen}
         />
 
-        <div className="controls-layout">
-          <GameControls
-            onStep={this.handleStepClick}
-            onToggleAuto={this.handleAutoStepToggle}
-            isAutoStepping={this.state.isAutoStepping}
-          />
-
-          <BoardActions
-            onRandomize={this.handleRandomize}
-            onClear={this.handleClear}
-            onReset={this.handleReset}
-          />
-
-          <div className="control-section">
-            <h4 className="section-title">Auto-step Speed</h4>
-            <div className="speed-control">
-              <label htmlFor="interval-slider" className="control-label">
-                {this.state.stepInterval}ms between steps
-              </label>
-              <input
-                id="interval-slider"
-                className="speed-slider"
-                type="range"
-                min="50"
-                max="1000"
-                value={this.state.stepInterval}
-                onChange={this.handleIntervalChange}
+        <main className="app-main" ref={this.gridContainerRef}>
+          <div className="grid-container">
+            {this.state.rows > 0 && this.state.cols > 0 && (
+              <Grid
+                cells={this.state.cells}
+                onCellClick={this.handleCellClick}
+                numCellStages={this.state.numCellStages}
+                rows={this.state.rows}
+                cols={this.state.cols}
+                cellSize={this.state.cellSize}
+                colorScheme={this.state.colorScheme}
               />
-              <p className="speed-info">50ms = fastest • 1000ms = slowest</p>
-            </div>
+            )}
           </div>
-        </div>
+        </main>
 
-        <div className="control-section rules-section">
-          <RulesControl
-            rules={this.state.rules}
-            onRuleChange={this.handleRuleChange}
-          />
-        </div>
+        <Footer
+          onStep={this.handleStepClick}
+          onToggleAuto={this.handleAutoStepToggle}
+          isAutoStepping={this.state.isAutoStepping}
+          onRandomFill={this.handleRandomFillFromDropdown}
+          onRandomRules={this.handleRandomRulesFromDropdown}
+          onRandomEverything={this.handleRandomEverythingFromDropdown}
+          onClear={this.handleClear}
+          isRandomDropdownOpen={this.state.isRandomDropdownOpen}
+          onToggleRandomDropdown={this.handleToggleRandomDropdown}
+        />
+
+        <Sidebar
+          isOpen={this.state.isSidebarOpen}
+          onClose={this.handleCloseSidebar}
+          cellSize={this.state.cellSize}
+          onCellSizeChange={this.handleCellSizeChange}
+          numCellStages={this.state.numCellStages}
+          onStagesChange={this.handleStagesChange}
+          speed={this.state.speed}
+          onSpeedChange={this.handleSpeedChange}
+          rules={this.state.rules}
+          onRuleChange={this.handleRuleChange}
+          onReset={this.handleReset}
+          colorScheme={this.state.colorScheme}
+          onColorSchemeChange={this.handleColorSchemeChange}
+          rows={this.state.rows}
+          cols={this.state.cols}
+        />
+
+        {this.state.isSidebarOpen && (
+          <div className="sidebar-backdrop" onClick={this.handleCloseSidebar} />
+        )}
       </div>
     );
   }
