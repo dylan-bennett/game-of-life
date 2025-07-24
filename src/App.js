@@ -550,7 +550,7 @@ const Sidebar = ({
           className="sidebar-slider"
           type="range"
           min="1"
-          max="20"
+          max="10"
           value={speed}
           onChange={onSpeedChange}
         />
@@ -591,7 +591,7 @@ class App extends Component {
       numCellStages: 2,
       rules: createRules(2),
       isAutoStepping: false,
-      speed: 18, // Speed scale from 1 (slowest) to 20 (fastest), default relatively fast
+      speed: 5, // Speed scale from 1 (slowest) to 10 (fastest), default medium-fast
       colorScheme: "greyscale", // Default to greyscale
       isSidebarOpen: false,
       // Grid will be calculated dynamically based on available space
@@ -742,10 +742,10 @@ class App extends Component {
     );
   };
 
-  // Convert speed (1-20) to interval in milliseconds
+  // Convert speed (1-10) to interval in milliseconds
   getIntervalFromSpeed = (speed) => {
-    // Speed 1 = 1000ms (slowest), Speed 20 = 50ms (fastest)
-    return 1050 - speed * 50;
+    // Speed 1 = 230ms (slowest), Speed 10 = 50ms (fastest)
+    return 250 - speed * 20;
   };
 
   // Start auto-stepping
@@ -952,14 +952,25 @@ class App extends Component {
   handleReset = () => {
     if (this.state.isAutoStepping) {
       this.stopAutoStepping();
-      this.setState(() => ({
-        isAutoStepping: false,
-      }));
     }
-    this.setState(() => ({
-      cells: createCells(this.state.rows, this.state.cols),
-      rules: createRules(this.state.numCellStages),
-    }));
+
+    // Reset all settings to defaults
+    this.setState(
+      {
+        numCellStages: 2,
+        rules: createRules(2),
+        isAutoStepping: false,
+        speed: 5,
+        colorScheme: "greyscale",
+        isSidebarOpen: true,
+        cellSize: 20,
+        isRandomDropdownOpen: false,
+      },
+      () => {
+        // Recalculate grid with new cell size
+        this.calculateGridSize();
+      }
+    );
   };
 
   handleToggleSidebar = () => {
