@@ -302,7 +302,6 @@ const Grid = ({
 
       // Transform mouse coordinates to grid coordinates
       // Account for pan and zoom
-      const effectiveCellSize = cellSize * zoom;
       const x = (mouseX - panX) / zoom;
       const y = (mouseY - panY) / zoom;
 
@@ -492,7 +491,7 @@ const Grid = ({
         if (touchState.lastDistance > 0) {
           // Handle pinch zoom
           const zoomFactor = currentDistance / touchState.lastDistance;
-          const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor));
+          const newZoom = Math.max(1.0, Math.min(10, zoom * zoomFactor));
 
           if (onZoomChange && Math.abs(zoomFactor - 1) > 0.01) {
             // Calculate zoom point (center of pinch)
@@ -591,7 +590,7 @@ const Grid = ({
 
       // Zoom factor
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor));
+      const newZoom = Math.max(1.0, Math.min(10, zoom * zoomFactor));
 
       if (onZoomChange && newZoom !== zoom) {
         // Calculate zoom center point to zoom towards mouse position
@@ -949,7 +948,7 @@ const Sidebar = ({
         <input
           className="sidebar-slider"
           type="range"
-          min="0.1"
+          min="1.0"
           max="8.0"
           step="0.1"
           value={zoom}
@@ -1000,8 +999,8 @@ class App extends Component {
     super(props);
 
     // Fixed logical grid size - no longer dependent on screen size
-    const GRID_ROWS = 150;
-    const GRID_COLS = 150;
+    const GRID_ROWS = 100;
+    const GRID_COLS = 100;
 
     this.state = {
       numCellStages: 2,
