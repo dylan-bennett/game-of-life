@@ -150,8 +150,12 @@ const InstructionsOverlay = ({ onHide }) => {
   const isMobile = "ontouchstart" in window || window.innerWidth < 768;
 
   const instructionText = isMobile
-    ? "Drag your finger over the grid, then press Start"
+    ? "Tap and drag to draw cells, then press Start"
     : "Click and drag over the grid, then click Start";
+
+  const controlsText = isMobile
+    ? "🔍 Pinch to zoom • ✋ Two fingers to pan • 🎨 One finger to draw"
+    : "🔍 Mouse wheel to zoom • 🖱️ Right-click drag to pan • 🎨 Left-click drag to draw";
 
   return (
     <div
@@ -215,6 +219,20 @@ const InstructionsOverlay = ({ onHide }) => {
         </p>
         <p
           style={{
+            margin: "0 0 1rem 0",
+            color: "#555",
+            fontSize: "0.85rem",
+            lineHeight: "1.3",
+            fontFamily: "monospace",
+            backgroundColor: "#f5f5f5",
+            padding: "0.5rem",
+            borderRadius: "4px",
+          }}
+        >
+          {controlsText}
+        </p>
+        <p
+          style={{
             margin: 0,
             color: "#666",
             fontSize: "0.9rem",
@@ -238,12 +256,26 @@ const Grid = ({
   rows,
   cols,
   cellSize,
+  zoom,
+  panX,
+  panY,
+  onZoomChange,
+  onPanChange,
   colorScheme,
   onFirstInteraction, // New prop for hiding instructions
 }) => {
   const canvasRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
   const [lastDraggedCell, setLastDraggedCell] = useState(null);
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+
+  // Touch state for mobile gestures
+  const [touchState, setTouchState] = useState({
+    isMultiTouch: false,
+    lastDistance: 0,
+    lastCenter: { x: 0, y: 0 },
+  });
 
   // Get cell coordinates from mouse position
   const getCellFromMousePos = useCallback(
@@ -252,8 +284,14 @@ const Grid = ({
       if (!canvas) return null;
 
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Transform mouse coordinates to grid coordinates
+      // Account for pan and zoom
+      const effectiveCellSize = cellSize * zoom;
+      const x = (mouseX - panX) / zoom;
+      const y = (mouseY - panY) / zoom;
 
       const col = Math.floor(x / cellSize);
       const row = Math.floor(y / cellSize);
@@ -263,7 +301,7 @@ const Grid = ({
       }
       return null;
     },
-    [cellSize, rows, cols]
+    [cellSize, zoom, panX, panY, rows, cols]
   );
 
   // Handle cell interaction (click or drag)
@@ -299,68 +337,265 @@ const Grid = ({
   // Mouse event handlers
   const handleMouseDown = useCallback(
     (e) => {
-      setIsDragging(true);
-      setLastDraggedCell(null);
-      handleCellInteraction(e);
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      setLastMousePos({ x: mouseX, y: mouseY });
+
+      if (e.button === 2) {
+        // Right click - start panning
+        e.preventDefault();
+        setIsPanning(true);
+      } else if (e.button === 0) {
+        // Left click - start cell interaction
+        setIsDragging(true);
+        setLastDraggedCell(null);
+        handleCellInteraction(e);
+      }
     },
     [handleCellInteraction]
   );
 
   const handleMouseMove = useCallback(
     (e) => {
-      if (isDragging) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      if (isPanning && onPanChange) {
+        // Pan the view
+        const deltaX = mouseX - lastMousePos.x;
+        const deltaY = mouseY - lastMousePos.y;
+        onPanChange(panX + deltaX, panY + deltaY);
+      } else if (isDragging) {
+        // Draw cells
         handleCellInteraction(e);
       }
+
+      setLastMousePos({ x: mouseX, y: mouseY });
     },
-    [isDragging, handleCellInteraction]
+    [
+      isDragging,
+      isPanning,
+      handleCellInteraction,
+      lastMousePos,
+      panX,
+      panY,
+      onPanChange,
+    ]
   );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsPanning(false);
     setLastDraggedCell(null);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false);
+    setIsPanning(false);
     setLastDraggedCell(null);
+  }, []);
+
+  // Helper functions for touch gestures
+  const getTouchDistance = useCallback((touch1, touch2) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }, []);
+
+  const getTouchCenter = useCallback((touch1, touch2, rect) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+      y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+    };
   }, []);
 
   // Touch event handlers for mobile support
   const handleTouchStart = useCallback(
     (e) => {
       e.preventDefault(); // Prevent scrolling
-      const touch = e.touches[0];
-      const mouseEvent = {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      };
-      setIsDragging(true);
-      setLastDraggedCell(null);
-      handleCellInteraction(mouseEvent);
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      if (e.touches.length === 1) {
+        // Single touch - cell interaction
+        const touch = e.touches[0];
+        const mouseEvent = {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        };
+        setIsDragging(true);
+        setLastDraggedCell(null);
+        setTouchState({
+          isMultiTouch: false,
+          lastDistance: 0,
+          lastCenter: { x: 0, y: 0 },
+        });
+        handleCellInteraction(mouseEvent);
+      } else if (e.touches.length === 2) {
+        // Two finger touch - prepare for zoom/pan
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = getTouchDistance(touch1, touch2);
+        const center = getTouchCenter(touch1, touch2, rect);
+
+        setIsDragging(false); // Stop cell interaction
+        setTouchState({
+          isMultiTouch: true,
+          lastDistance: distance,
+          lastCenter: center,
+        });
+      }
     },
-    [handleCellInteraction]
+    [handleCellInteraction, getTouchDistance, getTouchCenter]
   );
 
   const handleTouchMove = useCallback(
     (e) => {
       e.preventDefault(); // Prevent scrolling
-      if (isDragging && e.touches.length === 1) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      if (e.touches.length === 1 && isDragging && !touchState.isMultiTouch) {
+        // Single finger drag - continue cell interaction
         const touch = e.touches[0];
         const mouseEvent = {
           clientX: touch.clientX,
           clientY: touch.clientY,
         };
         handleCellInteraction(mouseEvent);
+      } else if (e.touches.length === 2 && touchState.isMultiTouch) {
+        // Two finger gesture - zoom and/or pan
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = getTouchDistance(touch1, touch2);
+        const currentCenter = getTouchCenter(touch1, touch2, rect);
+
+        if (touchState.lastDistance > 0) {
+          // Handle pinch zoom
+          const zoomFactor = currentDistance / touchState.lastDistance;
+          const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor));
+
+          if (onZoomChange && Math.abs(zoomFactor - 1) > 0.01) {
+            // Calculate zoom point (center of pinch)
+            const zoomPointX = (touchState.lastCenter.x - panX) / zoom;
+            const zoomPointY = (touchState.lastCenter.y - panY) / zoom;
+
+            const newPanX = touchState.lastCenter.x - zoomPointX * newZoom;
+            const newPanY = touchState.lastCenter.y - zoomPointY * newZoom;
+
+            onZoomChange(newZoom);
+            if (onPanChange) {
+              onPanChange(newPanX, newPanY);
+            }
+          }
+
+          // Handle two-finger pan (even during zoom)
+          if (onPanChange) {
+            const panDeltaX = currentCenter.x - touchState.lastCenter.x;
+            const panDeltaY = currentCenter.y - touchState.lastCenter.y;
+
+            // Only apply pan if there's significant movement
+            if (Math.abs(panDeltaX) > 2 || Math.abs(panDeltaY) > 2) {
+              onPanChange(panX + panDeltaX, panY + panDeltaY);
+            }
+          }
+        }
+
+        // Update touch state
+        setTouchState({
+          isMultiTouch: true,
+          lastDistance: currentDistance,
+          lastCenter: currentCenter,
+        });
       }
     },
-    [isDragging, handleCellInteraction]
+    [
+      isDragging,
+      touchState,
+      handleCellInteraction,
+      getTouchDistance,
+      getTouchCenter,
+      zoom,
+      panX,
+      panY,
+      onZoomChange,
+      onPanChange,
+    ]
   );
 
-  const handleTouchEnd = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    setLastDraggedCell(null);
-  }, []);
+  const handleTouchEnd = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 0) {
+        // All fingers lifted
+        setIsDragging(false);
+        setLastDraggedCell(null);
+        setTouchState({
+          isMultiTouch: false,
+          lastDistance: 0,
+          lastCenter: { x: 0, y: 0 },
+        });
+      } else if (e.touches.length === 1 && touchState.isMultiTouch) {
+        // Went from two fingers to one - switch back to cell interaction
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const touch = e.touches[0];
+          const mouseEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          };
+          setIsDragging(true);
+          setLastDraggedCell(null);
+          setTouchState({
+            isMultiTouch: false,
+            lastDistance: 0,
+            lastCenter: { x: 0, y: 0 },
+          });
+          handleCellInteraction(mouseEvent);
+        }
+      }
+    },
+    [touchState.isMultiTouch, handleCellInteraction]
+  );
+
+  // Mouse wheel handler for zooming
+  const handleWheel = useCallback(
+    (e) => {
+      e.preventDefault();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Zoom factor
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor));
+
+      if (onZoomChange && newZoom !== zoom) {
+        // Calculate zoom center point to zoom towards mouse position
+        const zoomPointX = (mouseX - panX) / zoom;
+        const zoomPointY = (mouseY - panY) / zoom;
+
+        const newPanX = mouseX - zoomPointX * newZoom;
+        const newPanY = mouseY - zoomPointY * newZoom;
+
+        onZoomChange(newZoom);
+        if (onPanChange) {
+          onPanChange(newPanX, newPanY);
+        }
+      }
+    },
+    [zoom, panX, panY, onZoomChange, onPanChange]
+  );
 
   // Draw the grid on canvas
   const drawGrid = useCallback(() => {
@@ -371,6 +606,13 @@ const Grid = ({
 
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Save the context state
+    ctx.save();
+
+    // Apply zoom and pan transforms
+    ctx.translate(panX, panY);
+    ctx.scale(zoom, zoom);
 
     // Draw cells
     for (let row = 0; row < rows; row++) {
@@ -387,28 +629,67 @@ const Grid = ({
         );
         ctx.fillRect(x, y, cellSize, cellSize);
 
-        // Draw cell border
+        // Draw cell border (adjust line width for zoom)
         ctx.strokeStyle = "#ddd";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 / zoom; // Keep border thickness consistent
         ctx.strokeRect(x, y, cellSize, cellSize);
       }
     }
-  }, [cells, rows, cols, cellSize, numCellStages, colorScheme]);
+
+    // Restore the context state
+    ctx.restore();
+  }, [
+    cells,
+    rows,
+    cols,
+    cellSize,
+    zoom,
+    panX,
+    panY,
+    numCellStages,
+    colorScheme,
+  ]);
 
   // Redraw when cells or props change
   useEffect(() => {
     drawGrid();
   }, [drawGrid]);
 
-  // Set canvas size
-  const canvasWidth = cols * cellSize;
-  const canvasHeight = rows * cellSize;
+  // Set canvas size to fill container
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+
+  // Update canvas size based on container
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (canvasRef.current && canvasRef.current.parentElement) {
+        const container = canvasRef.current.parentElement;
+        const rect = container.getBoundingClientRect();
+        setCanvasSize({
+          width: rect.width || 800,
+          height: rect.height || 600,
+        });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener("resize", updateCanvasSize);
+    return () => window.removeEventListener("resize", updateCanvasSize);
+  }, []);
+
+  // Set canvas dimensions
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasRef.current.width = canvasSize.width;
+      canvasRef.current.height = canvasSize.height;
+      drawGrid();
+    }
+  }, [canvasSize, drawGrid]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={canvasWidth}
-      height={canvasHeight}
+      width={canvasSize.width}
+      height={canvasSize.height}
       className="game-grid"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -417,9 +698,12 @@ const Grid = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel}
+      onContextMenu={(e) => e.preventDefault()} // Disable right-click context menu
       style={{
         border: "2px solid #333",
-        cursor: isDragging ? "crosshair" : "pointer",
+        cursor: isPanning ? "grab" : isDragging ? "crosshair" : "pointer",
+        touchAction: "none", // Prevent default touch behaviors like scrolling/zooming
       }}
     />
   );
@@ -617,8 +901,8 @@ const RulesControl = ({ rules, onRuleChange }) => {
 const Sidebar = ({
   isOpen,
   onClose,
-  cellSize,
-  onCellSizeChange,
+  zoom,
+  onZoomChange,
   speed,
   onSpeedChange,
   onReset,
@@ -643,17 +927,18 @@ const Sidebar = ({
       </div>
 
       <div className="sidebar-section">
-        <h4 className="sidebar-section-title">Cell Size</h4>
+        <h4 className="sidebar-section-title">Zoom</h4>
         <label className="sidebar-label">
-          {cellSize}px (Grid: {rows} × {cols})
+          {(zoom * 100).toFixed(0)}% (Grid: {rows} × {cols})
         </label>
         <input
           className="sidebar-slider"
           type="range"
-          min="15"
-          max="50"
-          value={cellSize}
-          onChange={onCellSizeChange}
+          min="0.1"
+          max="8.0"
+          step="0.1"
+          value={zoom}
+          onChange={onZoomChange}
         />
       </div>
 
@@ -699,6 +984,10 @@ class App extends Component {
   constructor(props) {
     super(props);
 
+    // Fixed logical grid size - no longer dependent on screen size
+    const GRID_ROWS = 150;
+    const GRID_COLS = 150;
+
     this.state = {
       numCellStages: 2,
       rules: createRules(2),
@@ -707,11 +996,14 @@ class App extends Component {
       colorScheme: "greyscale", // Default to greyscale
       isSidebarOpen: false, // Start with sidebar closed but make customization obvious through other UX improvements
       isEvolveSidebarOpen: false, // New state for evolve sidebar
-      // Grid will be calculated dynamically based on available space
-      cellSize: 20,
-      cells: [],
-      rows: 0,
-      cols: 0,
+      // Fixed grid size with zoom/pan
+      rows: GRID_ROWS,
+      cols: GRID_COLS,
+      cells: createCells(GRID_ROWS, GRID_COLS),
+      cellSize: 8, // Base cell size for rendering
+      zoom: 1.5, // Zoom level (1.0 = base size)
+      panX: 0, // Pan offset X
+      panY: 0, // Pan offset Y
       showInstructions: true, // New state for instructions overlay
     };
     this.autoStepInterval = null;
@@ -719,14 +1011,11 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.calculateGridSize();
-    window.addEventListener("resize", this.calculateGridSize);
     document.addEventListener("click", this.handleClickOutside);
   }
 
   componentWillUnmount() {
     this.stopAutoStepping();
-    window.removeEventListener("resize", this.calculateGridSize);
     document.removeEventListener("click", this.handleClickOutside);
   }
 
@@ -739,30 +1028,6 @@ class App extends Component {
       !event.target.closest(".footer-button")
     ) {
       this.setState({ isEvolveSidebarOpen: false });
-    }
-  };
-
-  // Calculate grid dimensions based on available space
-  calculateGridSize = () => {
-    if (!this.gridContainerRef.current) return;
-
-    const container = this.gridContainerRef.current;
-    const rect = container.getBoundingClientRect();
-
-    // Use the full available space - no padding
-    const availableWidth = rect.width;
-    const availableHeight = rect.height;
-
-    const cols = Math.ceil(availableWidth / this.state.cellSize);
-    const rows = Math.ceil(availableHeight / this.state.cellSize);
-
-    // Only update if dimensions have changed
-    if (cols !== this.state.cols || rows !== this.state.rows) {
-      this.setState({
-        cols: Math.max(1, cols),
-        rows: Math.max(1, rows),
-        cells: createCells(Math.max(1, rows), Math.max(1, cols)),
-      });
     }
   };
 
@@ -838,23 +1103,27 @@ class App extends Component {
     });
   };
 
-  // Handler function for changing cell size
-  handleCellSizeChange = (event) => {
-    const newCellSize = parseInt(event.target.value);
-    // Stop auto-stepping if it's running
-    if (this.state.isAutoStepping) {
-      this.stopAutoStepping();
-    }
-    this.setState(
-      {
-        cellSize: newCellSize,
-        isAutoStepping: false,
-      },
-      () => {
-        // Recalculate grid after cellSize changes
-        this.calculateGridSize();
-      }
-    );
+  // Handler function for changing zoom level
+  handleZoomChange = (event) => {
+    const newZoom = parseFloat(event.target.value);
+    this.setState({
+      zoom: newZoom,
+    });
+  };
+
+  // Handler for zoom changes from Grid component (wheel zoom)
+  handleZoomChangeFromGrid = (newZoom) => {
+    this.setState({
+      zoom: newZoom,
+    });
+  };
+
+  // Handler for pan changes from Grid component
+  handlePanChange = (newPanX, newPanY) => {
+    this.setState({
+      panX: newPanX,
+      panY: newPanY,
+    });
   };
 
   // Convert speed (1-10) to interval in milliseconds
@@ -1070,22 +1339,19 @@ class App extends Component {
     }
 
     // Reset all settings to defaults
-    this.setState(
-      {
-        numCellStages: 2,
-        rules: createRules(2),
-        isAutoStepping: false,
-        speed: 5,
-        colorScheme: "greyscale",
-        isSidebarOpen: true,
-        isEvolveSidebarOpen: false,
-        cellSize: 20,
-      },
-      () => {
-        // Recalculate grid with new cell size
-        this.calculateGridSize();
-      }
-    );
+    this.setState({
+      numCellStages: 2,
+      rules: createRules(2),
+      isAutoStepping: false,
+      speed: 5,
+      colorScheme: "greyscale",
+      isSidebarOpen: true,
+      isEvolveSidebarOpen: false,
+      cells: createCells(this.state.rows, this.state.cols),
+      zoom: 1.5,
+      panX: 0,
+      panY: 0,
+    });
   };
 
   handleToggleSidebar = () => {
@@ -1112,15 +1378,8 @@ class App extends Component {
 
   // Handler for random everything from evolve sidebar
   handleRandomEverythingFromEvolve = () => {
-    // First update stages, then run other functions in the callback
     this.handleRandomStages(() => {
-      // this.handleRandomFill();
       this.handleRandomEvolution();
-      // if (!this.state.isAutoStepping) {
-      //   this.startAutoStepping();
-      //   this.setState({ isAutoStepping: true });
-      // }
-      // this.setState({ isEvolveSidebarOpen: false });
     });
   };
 
@@ -1129,8 +1388,7 @@ class App extends Component {
     this.setState(
       {
         numCellStages: newNumCellStages,
-        // rules: createRules(newNumCellStages), // Also update rules for new stage count
-        // cells: createCells(this.state.rows, this.state.cols), // Reset cells for new stage count
+        rules: createRules(newNumCellStages), // Also update rules for new stage count
       },
       callback
     );
@@ -1153,18 +1411,21 @@ class App extends Component {
 
         <main className="app-main" ref={this.gridContainerRef}>
           <div className="grid-container">
-            {this.state.rows > 0 && this.state.cols > 0 && (
-              <Grid
-                cells={this.state.cells}
-                onCellClick={this.handleCellClick}
-                numCellStages={this.state.numCellStages}
-                rows={this.state.rows}
-                cols={this.state.cols}
-                cellSize={this.state.cellSize}
-                colorScheme={this.state.colorScheme}
-                onFirstInteraction={this.handleFirstInteraction}
-              />
-            )}
+            <Grid
+              cells={this.state.cells}
+              onCellClick={this.handleCellClick}
+              numCellStages={this.state.numCellStages}
+              rows={this.state.rows}
+              cols={this.state.cols}
+              cellSize={this.state.cellSize}
+              zoom={this.state.zoom}
+              panX={this.state.panX}
+              panY={this.state.panY}
+              onZoomChange={this.handleZoomChangeFromGrid}
+              onPanChange={this.handlePanChange}
+              colorScheme={this.state.colorScheme}
+              onFirstInteraction={this.handleFirstInteraction}
+            />
           </div>
         </main>
 
@@ -1179,8 +1440,8 @@ class App extends Component {
         <Sidebar
           isOpen={this.state.isSidebarOpen}
           onClose={this.handleCloseSidebar}
-          cellSize={this.state.cellSize}
-          onCellSizeChange={this.handleCellSizeChange}
+          zoom={this.state.zoom}
+          onZoomChange={this.handleZoomChange}
           speed={this.state.speed}
           onSpeedChange={this.handleSpeedChange}
           onReset={this.handleReset}
