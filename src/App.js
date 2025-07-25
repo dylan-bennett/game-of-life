@@ -117,20 +117,33 @@ const createCells = (rows, cols) => {
 };
 
 // Initialize rules for each stage and neighbor count
-const createRules = (numCellStages) => {
+const createRules = () => {
   const rules = [];
-  for (let stage = 0; stage < numCellStages; stage++) {
+  const MAX_STAGES = 8; // Always create rules for 8 stages
+
+  for (let stage = 0; stage < MAX_STAGES; stage++) {
     rules[stage] = [];
     for (let neighbors = 0; neighbors <= 8; neighbors++) {
       if (stage === 0) {
         // Stage 0 (dead cells): Classic GoL birth rule - exactly 3 neighbors
         rules[stage][neighbors] = neighbors === 3 ? "evolve" : "die";
-      } else if (stage === numCellStages - 1) {
-        // Final stage: Classic GoL survival rule - 2 or 3 neighbors
+      } else if (stage === MAX_STAGES - 1) {
+        // Final stage (stage 7): Classic GoL survival rule - 2 or 3 neighbors
         rules[stage][neighbors] =
           neighbors === 2 || neighbors === 3 ? "survive" : "die";
+      } else if (stage === 1) {
+        // Stage 1: special rules - 3 neighbors evolve, 4 neighbors die
+        if (neighbors === 2) {
+          rules[stage][neighbors] = "survive";
+        } else if (neighbors === 3) {
+          rules[stage][neighbors] = "evolve";
+        } else if (neighbors === 4) {
+          rules[stage][neighbors] = "die";
+        } else {
+          rules[stage][neighbors] = "die";
+        }
       } else {
-        // Middle stages: default to survive for 2-3 neighbors, evolve for others
+        // Middle stages (2-6): default to survive for 2-3 neighbors, evolve for others
         if (neighbors === 2 || neighbors === 3) {
           rules[stage][neighbors] = "survive";
         } else if (neighbors === 4) {
@@ -780,7 +793,11 @@ const EvolveSidebar = ({
         />
       </div>
 
-      <RulesControl rules={rules} onRuleChange={onRuleChange} />
+      <RulesControl
+        rules={rules}
+        onRuleChange={onRuleChange}
+        numCellStages={numCellStages}
+      />
     </div>
   </div>
 );
@@ -822,9 +839,7 @@ const Footer = ({
 );
 
 // Component for rendering the rules UI (compact for sidebar)
-const RulesControl = ({ rules, onRuleChange }) => {
-  const numCellStages = rules.length;
-
+const RulesControl = ({ rules, onRuleChange, numCellStages }) => {
   const getButtonStyle = (value) => ({
     backgroundColor:
       value === "survive"
@@ -844,7 +859,7 @@ const RulesControl = ({ rules, onRuleChange }) => {
       }
     } else if (stage === numCellStages - 1) {
       // Final stage: only survive or die
-      if (rule === "survive") {
+      if (rule === "survive" || rule === "evolve") {
         return <FontAwesomeIcon icon={faHeart} title="survive" />;
       } else if (rule === "die") {
         return <FontAwesomeIcon icon={faSkull} title="die" />;
@@ -872,7 +887,7 @@ const RulesControl = ({ rules, onRuleChange }) => {
   return (
     <div className="rules-control">
       <h4 className="sidebar-section-title">Rules</h4>
-      {rules.map((stageRules, stage) => (
+      {rules.slice(0, numCellStages).map((stageRules, stage) => (
         <div key={stage} className="rules-stage-compact">
           <div className="stage-header-compact">Stage {stage}</div>
           <div className="rules-buttons-compact">
@@ -990,7 +1005,7 @@ class App extends Component {
 
     this.state = {
       numCellStages: 2,
-      rules: createRules(2),
+      rules: createRules(),
       isAutoStepping: false,
       speed: 5, // Speed scale from 1 (slowest) to 10 (fastest), default medium-fast
       colorScheme: "greyscale", // Default to greyscale
@@ -1091,15 +1106,8 @@ class App extends Component {
   // Handler function for changing the number of cell stages
   handleStagesChange = (event) => {
     const newNumCellStages = parseInt(event.target.value);
-    // Stop auto-stepping if it's running
-    if (this.state.isAutoStepping) {
-      this.stopAutoStepping();
-    }
     this.setState({
       numCellStages: newNumCellStages,
-      cells: createCells(this.state.rows, this.state.cols), // Reset the board when changing stages
-      rules: createRules(newNumCellStages), // Reset rules for new stage count
-      isAutoStepping: false,
     });
   };
 
@@ -1207,8 +1215,9 @@ class App extends Component {
   handleRandomEvolution = () => {
     this.setState((prevState) => {
       const newRules = [];
+      const MAX_STAGES = 8;
 
-      for (let stage = 0; stage < prevState.numCellStages; stage++) {
+      for (let stage = 0; stage < MAX_STAGES; stage++) {
         newRules[stage] = [];
 
         // Get available rules for this stage
@@ -1216,11 +1225,11 @@ class App extends Component {
         if (stage === 0) {
           // Stage 0: only "die" (remain dead) or "evolve" (birth)
           availableRules = ["die", "evolve"];
-        } else if (stage === prevState.numCellStages - 1) {
-          // Final stage: only "survive" or "die"
+        } else if (stage === MAX_STAGES - 1) {
+          // Final stage (stage 7): only "survive" or "die"
           availableRules = ["survive", "die"];
         } else {
-          // Middle stages: all three options
+          // Middle stages (1-6): all three options
           availableRules = ["survive", "evolve", "die"];
         }
 
@@ -1290,19 +1299,38 @@ class App extends Component {
       // Go through each cell and update its stage based on the Game of Life rules
       for (let r = 0; r < prevState.rows; r++) {
         for (let c = 0; c < prevState.cols; c++) {
+          const currentCell = newCells[r][c];
+
+          // If cell stage is beyond the current numCellStages, it dies
+          if (currentCell.stage >= prevState.numCellStages) {
+            currentCell.stage = 0;
+            continue;
+          }
+
           // Get the number of neighbours of that cell from the previous state
           const numNeighbours = this.getNumNeighbours(
             prevState.cells[r][c],
             prevState.cells
           );
 
-          // Update the cell's stage based on the rules, using the number of neighbours
-          const rule = prevState.rules[newCells[r][c].stage][numNeighbours];
-          if (rule === "die") {
-            newCells[r][c].stage = 0;
-          } else if (rule === "evolve") {
-            newCells[r][c] = this.incrementCellStage(newCells[r][c]);
+          // Get the rule for this stage and neighbor count
+          let rule = prevState.rules[currentCell.stage][numNeighbours];
+
+          // If we're at the max stage and the rule is "evolve", treat as "survive"
+          if (
+            currentCell.stage === prevState.numCellStages - 1 &&
+            rule === "evolve"
+          ) {
+            rule = "survive";
           }
+
+          // Apply the rule
+          if (rule === "die") {
+            currentCell.stage = 0;
+          } else if (rule === "evolve") {
+            newCells[r][c] = this.incrementCellStage(currentCell);
+          }
+          // "survive" means do nothing - keep current stage
         }
       }
 
@@ -1341,7 +1369,7 @@ class App extends Component {
     // Reset all settings to defaults
     this.setState({
       numCellStages: 2,
-      rules: createRules(2),
+      rules: createRules(),
       isAutoStepping: false,
       speed: 5,
       colorScheme: "greyscale",
@@ -1388,7 +1416,7 @@ class App extends Component {
     this.setState(
       {
         numCellStages: newNumCellStages,
-        rules: createRules(newNumCellStages), // Also update rules for new stage count
+        // Don't recreate rules - preserve existing rules
       },
       callback
     );
