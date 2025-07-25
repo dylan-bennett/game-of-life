@@ -177,11 +177,23 @@ const InstructionsOverlay = ({ onHide }) => {
           borderRadius: "12px",
           boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
           textAlign: "center",
-          maxWidth: "350px",
+          maxWidth: "400px",
           margin: "1rem",
           border: "2px solid #333",
         }}
       >
+        {/* <img
+          src="/assets/intro_graphic_transparent.png"
+          alt="Game of Life: Evolved"
+          style={{
+            width: "120px",
+            height: "auto",
+            marginBottom: "1rem",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        /> */}
         <h3
           style={{
             margin: "0 0 1rem 0",
