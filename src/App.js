@@ -752,6 +752,7 @@ const EvolveSidebar = ({
   onStagesChange,
   rules,
   onRuleChange,
+  onReset,
 }) => (
   <div className={`sidebar evolve-sidebar ${isOpen ? "sidebar-open" : ""}`}>
     <div className="sidebar-content">
@@ -797,6 +798,12 @@ const EvolveSidebar = ({
         onRuleChange={onRuleChange}
         numCellStages={numCellStages}
       />
+
+      <div className="sidebar-footer">
+        <Button onClick={onReset} variant="default" className="sidebar-reset">
+          Reset
+        </Button>
+      </div>
     </div>
   </div>
 );
@@ -1381,6 +1388,25 @@ class App extends Component {
     });
   };
 
+  // Handler for resetting only customization settings (zoom, speed, color, pan)
+  handleCustomizeReset = () => {
+    this.setState({
+      speed: 5,
+      colorScheme: "greyscale",
+      zoom: 1.5,
+      panX: 0,
+      panY: 0,
+    });
+  };
+
+  // Handler for resetting only evolution settings (stages, rules)
+  handleEvolveReset = () => {
+    this.setState({
+      numCellStages: 2,
+      rules: createRules(),
+    });
+  };
+
   handleToggleSidebar = () => {
     this.setState((prevState) => ({
       isSidebarOpen: !prevState.isSidebarOpen,
@@ -1471,7 +1497,7 @@ class App extends Component {
           onZoomChange={this.handleZoomChange}
           speed={this.state.speed}
           onSpeedChange={this.handleSpeedChange}
-          onReset={this.handleReset}
+          onReset={this.handleCustomizeReset}
           colorScheme={this.state.colorScheme}
           onColorSchemeChange={this.handleColorSchemeChange}
           rows={this.state.rows}
@@ -1486,6 +1512,7 @@ class App extends Component {
           onStagesChange={this.handleStagesChange}
           rules={this.state.rules}
           onRuleChange={this.handleRuleChange}
+          onReset={this.handleEvolveReset}
         />
 
         {this.state.isSidebarOpen && (
