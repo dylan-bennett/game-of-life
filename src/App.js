@@ -510,8 +510,12 @@ const Footer = ({
   onToggleEvolveSidebar,
 }) => (
   <footer className="app-footer">
-    <Button onClick={onClear} variant="default" className="footer-button">
-      Clear
+    <Button
+      onClick={onToggleEvolveSidebar}
+      variant="success"
+      className="footer-button"
+    >
+      Evolve
     </Button>
 
     <div className="footer-center">
@@ -527,12 +531,8 @@ const Footer = ({
       </Button>
     </div>
 
-    <Button
-      onClick={onToggleEvolveSidebar}
-      variant="success"
-      className="footer-button"
-    >
-      Evolve
+    <Button onClick={onClear} variant="default" className="footer-button">
+      Clear
     </Button>
   </footer>
 );
@@ -1114,12 +1114,12 @@ class App extends Component {
   handleRandomEverythingFromEvolve = () => {
     // First update stages, then run other functions in the callback
     this.handleRandomStages(() => {
-      this.handleRandomFill();
+      // this.handleRandomFill();
       this.handleRandomEvolution();
-      if (!this.state.isAutoStepping) {
-        this.startAutoStepping();
-        this.setState({ isAutoStepping: true });
-      }
+      // if (!this.state.isAutoStepping) {
+      //   this.startAutoStepping();
+      //   this.setState({ isAutoStepping: true });
+      // }
       // this.setState({ isEvolveSidebarOpen: false });
     });
   };
@@ -1129,8 +1129,8 @@ class App extends Component {
     this.setState(
       {
         numCellStages: newNumCellStages,
-        rules: createRules(newNumCellStages), // Also update rules for new stage count
-        cells: createCells(this.state.rows, this.state.cols), // Reset cells for new stage count
+        // rules: createRules(newNumCellStages), // Also update rules for new stage count
+        // cells: createCells(this.state.rows, this.state.cols), // Reset cells for new stage count
       },
       callback
     );
