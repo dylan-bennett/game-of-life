@@ -10,7 +10,6 @@ import {
   faSkull,
   faHeart,
   faArrowUp,
-  faBars,
   faTimes,
   faCog,
   faQuestionCircle,
@@ -798,7 +797,7 @@ const HelpModal = ({ onClose }) => {
               John Conway in 1970. It's a zero-player game where cells on a grid
               evolve based on simple rules:
             </p>
-            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+            <ul style={{ marginBottom: "1rem" }}>
               <li>
                 <strong>Birth:</strong> Dead cells with exactly 3 neighbors
                 become alive
@@ -823,7 +822,7 @@ const HelpModal = ({ onClose }) => {
               <strong>multi-stage evolution</strong> and{" "}
               <strong>customizable rules</strong>:
             </p>
-            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+            <ul style={{ marginBottom: "1rem" }}>
               <li>
                 <strong>Multiple Life Stages:</strong> Cells don't just live or
                 die - they evolve through stages (2-8 stages)
@@ -838,7 +837,7 @@ const HelpModal = ({ onClose }) => {
               </li>
               <li>
                 <strong>Rule Actions:</strong>
-                <ul style={{ marginLeft: "1rem", marginTop: "0.5rem" }}>
+                <ul style={{ marginTop: "0.5rem" }}>
                   <li>
                     <FontAwesomeIcon
                       icon={faHeart}
@@ -869,7 +868,7 @@ const HelpModal = ({ onClose }) => {
             <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
               How to Play
             </h3>
-            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+            <ul style={{ marginBottom: "1rem" }}>
               <li>
                 <strong>Draw:</strong> Click/tap and drag to create living cells
               </li>
@@ -896,7 +895,7 @@ const HelpModal = ({ onClose }) => {
             <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
               Tips for Exploration
             </h3>
-            <ul style={{ marginLeft: "1.5rem" }}>
+            <ul>
               <li>
                 Try different stage counts (2-8) to see how complexity emerges
               </li>
@@ -957,7 +956,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen, onShowHelp }) => (
           : "Open customization panel - change colors, rules, speed, and more!"
       }
     >
-      <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} />
+      <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faCog} />
       <span className="customize-text">
         {isSidebarOpen ? "Close" : "Customize"}
       </span>
