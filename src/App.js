@@ -13,6 +13,7 @@ import {
   faBars,
   faTimes,
   faCog,
+  faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Custom Button component to reduce repetition
@@ -173,6 +174,7 @@ const InstructionsOverlay = ({ onHide }) => {
   return (
     <div
       className="instructions-overlay"
+      onClick={onHide}
       style={{
         position: "fixed",
         top: 0,
@@ -184,7 +186,7 @@ const InstructionsOverlay = ({ onHide }) => {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        pointerEvents: "none", // Allow clicks to pass through to the grid
+        cursor: "pointer",
       }}
     >
       <div
@@ -721,10 +723,230 @@ const Grid = ({
   );
 };
 
+// Help Modal component
+const HelpModal = ({ onClose }) => {
+  return (
+    <div
+      className="help-modal-overlay"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1001,
+        cursor: "pointer",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: "white",
+          padding: "2rem",
+          borderRadius: "12px",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+          maxWidth: "600px",
+          maxHeight: "80vh",
+          margin: "1rem",
+          border: "2px solid #333",
+          cursor: "auto",
+          overflowY: "auto",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <h2 style={{ margin: 0, color: "#333", fontSize: "1.5rem" }}>
+            <FontAwesomeIcon
+              icon={faQuestionCircle}
+              style={{ marginRight: "0.5rem", color: "#007bff" }}
+            />
+            About Game of Life: Evolved
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: "1.5rem",
+              cursor: "pointer",
+              color: "#666",
+              padding: "0.25rem",
+            }}
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        <div style={{ color: "#333", lineHeight: "1.6" }}>
+          <section style={{ marginBottom: "1.5rem" }}>
+            <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
+              What is Conway's Game of Life?
+            </h3>
+            <p style={{ margin: "0 0 1rem 0" }}>
+              The Game of Life is a cellular automaton created by mathematician
+              John Conway in 1970. It's a zero-player game where cells on a grid
+              evolve based on simple rules:
+            </p>
+            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+              <li>
+                <strong>Birth:</strong> Dead cells with exactly 3 neighbors
+                become alive
+              </li>
+              <li>
+                <strong>Survival:</strong> Live cells with 2 or 3 neighbors stay
+                alive
+              </li>
+              <li>
+                <strong>Death:</strong> All other cells die from loneliness or
+                overcrowding
+              </li>
+            </ul>
+          </section>
+
+          <section style={{ marginBottom: "1.5rem" }}>
+            <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
+              How is this version "Evolved"?
+            </h3>
+            <p style={{ margin: "0 0 1rem 0" }}>
+              This enhanced version introduces{" "}
+              <strong>multi-stage evolution</strong> and{" "}
+              <strong>customizable rules</strong>:
+            </p>
+            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+              <li>
+                <strong>Multiple Life Stages:</strong> Cells don't just live or
+                die - they evolve through stages (2-8 stages)
+              </li>
+              <li>
+                <strong>Custom Rules:</strong> Define how cells behave at each
+                stage with different neighbor counts
+              </li>
+              <li>
+                <strong>Visual Evolution:</strong> Watch cells progress through
+                different colors as they age and evolve
+              </li>
+              <li>
+                <strong>Rule Actions:</strong>
+                <ul style={{ marginLeft: "1rem", marginTop: "0.5rem" }}>
+                  <li>
+                    <FontAwesomeIcon
+                      icon={faHeart}
+                      style={{ color: "#90EE90", marginRight: "0.25rem" }}
+                    />{" "}
+                    <strong>Survive:</strong> Stay at current stage
+                  </li>
+                  <li>
+                    <FontAwesomeIcon
+                      icon={faArrowUp}
+                      style={{ color: "#FFF500", marginRight: "0.25rem" }}
+                    />{" "}
+                    <strong>Evolve:</strong> Advance to next stage
+                  </li>
+                  <li>
+                    <FontAwesomeIcon
+                      icon={faSkull}
+                      style={{ color: "#FFB6C1", marginRight: "0.25rem" }}
+                    />{" "}
+                    <strong>Die:</strong> Return to stage 0 (dead)
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </section>
+
+          <section style={{ marginBottom: "1.5rem" }}>
+            <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
+              How to Play
+            </h3>
+            <ul style={{ marginLeft: "1.5rem", marginBottom: "1rem" }}>
+              <li>
+                <strong>Draw:</strong> Click/tap and drag to create living cells
+              </li>
+              <li>
+                <strong>Navigate:</strong> Zoom with mouse wheel or pinch, pan
+                with right-click drag or two fingers
+              </li>
+              <li>
+                <strong>Control:</strong> Use Step to advance one generation, or
+                Start for continuous evolution
+              </li>
+              <li>
+                <strong>Customize:</strong> Click "Customize" to change colors,
+                speed, and zoom
+              </li>
+              <li>
+                <strong>Evolve:</strong> Click "Evolve" to modify stages and
+                rules, or hit "Randomize" for surprises!
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 style={{ color: "#007bff", marginBottom: "0.5rem" }}>
+              Tips for Exploration
+            </h3>
+            <ul style={{ marginLeft: "1.5rem" }}>
+              <li>
+                Try different stage counts (2-8) to see how complexity emerges
+              </li>
+              <li>
+                Experiment with custom rules - each stage can have different
+                behaviors
+              </li>
+              <li>
+                Use "Randomize" to discover unexpected patterns and behaviors
+              </li>
+              <li>
+                Watch how multi-stage evolution creates more stable and complex
+                structures
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Header component
-const Header = ({ onToggleSidebar, isSidebarOpen }) => (
+const Header = ({ onToggleSidebar, isSidebarOpen, onShowHelp }) => (
   <header className="app-header">
-    <h1 className="app-title">Game of Life: Evolved</h1>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <h1 className="app-title">Game of Life: Evolved</h1>
+      <button
+        onClick={onShowHelp}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#007bff",
+          fontSize: "1.2rem",
+          cursor: "pointer",
+          padding: "0.25rem",
+          borderRadius: "50%",
+          transition: "all 0.2s ease",
+        }}
+        title="Learn about Game of Life: Evolved"
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = "rgba(0, 123, 255, 0.1)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = "transparent";
+        }}
+      >
+        <FontAwesomeIcon icon={faQuestionCircle} />
+      </button>
+    </div>
     <Button
       onClick={onToggleSidebar}
       className="sidebar-toggle customize-button"
@@ -1026,6 +1248,7 @@ class App extends Component {
       panX: 0, // Pan offset X
       panY: 0, // Pan offset Y
       showInstructions: true, // New state for instructions overlay
+      showHelpModal: false, // New state for help modal
     };
     this.autoStepInterval = null;
     this.gridContainerRef = React.createRef();
@@ -1460,6 +1683,7 @@ class App extends Component {
         <Header
           onToggleSidebar={this.handleToggleSidebar}
           isSidebarOpen={this.state.isSidebarOpen}
+          onShowHelp={() => this.setState({ showHelpModal: true })}
         />
 
         <main className="app-main" ref={this.gridContainerRef}>
@@ -1528,6 +1752,10 @@ class App extends Component {
 
         {this.state.showInstructions && (
           <InstructionsOverlay onHide={this.handleFirstInteraction} />
+        )}
+
+        {this.state.showHelpModal && (
+          <HelpModal onClose={() => this.setState({ showHelpModal: false })} />
         )}
       </div>
     );
