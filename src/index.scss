@@ -926,3 +926,48 @@ body {
     }
   }
 }
+
+// =============================================================================
+// Evolve Sidebar
+// =============================================================================
+
+.evolve-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  height: 100dvh; // Use dynamic viewport height for better mobile support
+  width: size(sidebar-width);
+  background: color(neutral, white);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+
+  @include respond-below(md) {
+    width: 100vw;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  }
+
+  // Fallback for mobile browsers that don't support dvh
+  @supports not (height: 100dvh) {
+    @media screen and (max-width: 768px) {
+      height: calc(100vh - env(keyboard-inset-height, 0px));
+      min-height: -webkit-fill-available; // Safari iOS fallback
+    }
+  }
+
+  @include dark-mode {
+    background: color(dark, bg-secondary);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+
+    @include respond-below(md) {
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  &.sidebar-open {
+    transform: translateX(0);
+  }
+}

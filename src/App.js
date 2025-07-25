@@ -447,36 +447,57 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => (
   </header>
 );
 
-// Random dropdown menu component
-const RandomDropdown = ({
+// Evolve sidebar component
+const EvolveSidebar = ({
   isOpen,
-  onToggle,
-  onRandomFill,
-  onRandomRules,
+  onClose,
   onRandomEverything,
+  numCellStages,
+  onStagesChange,
+  rules,
+  onRuleChange,
 }) => (
-  <div className="random-dropdown">
-    <Button
-      onClick={onToggle}
-      variant="success"
-      className="footer-button random-button"
-    >
-      Random
-      <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▲</span>
-    </Button>
-    {isOpen && (
-      <div className="dropdown-menu">
-        <button className="dropdown-item" onClick={onRandomFill}>
-          Random Fill
-        </button>
-        <button className="dropdown-item" onClick={onRandomRules}>
-          Random Rules
-        </button>
-        <button className="dropdown-item" onClick={onRandomEverything}>
-          Random Everything
-        </button>
+  <div className={`sidebar evolve-sidebar ${isOpen ? "sidebar-open" : ""}`}>
+    <div className="sidebar-content">
+      <div className="sidebar-header">
+        <h3>
+          <FontAwesomeIcon
+            icon={faCog}
+            style={{ marginRight: "0.5rem", color: "#007bff" }}
+          />
+          Evolution Controls
+        </h3>
+        <Button onClick={onClose} className="sidebar-close">
+          <FontAwesomeIcon icon={faTimes} />
+        </Button>
       </div>
-    )}
+
+      <div className="sidebar-section">
+        <Button
+          onClick={onRandomEverything}
+          variant="success"
+          className="sidebar-button full-width"
+          style={{ width: "100%", marginBottom: "1rem" }}
+        >
+          Randomize
+        </Button>
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-section-title">Stages</h4>
+        <label className="sidebar-label">{numCellStages}</label>
+        <input
+          className="sidebar-slider"
+          type="range"
+          min="2"
+          max="8"
+          value={numCellStages}
+          onChange={onStagesChange}
+        />
+      </div>
+
+      <RulesControl rules={rules} onRuleChange={onRuleChange} />
+    </div>
   </div>
 );
 
@@ -485,12 +506,8 @@ const Footer = ({
   onStep,
   onToggleAuto,
   isAutoStepping,
-  onRandomFill,
-  onRandomRules,
-  onRandomEverything,
   onClear,
-  isRandomDropdownOpen,
-  onToggleRandomDropdown,
+  onToggleEvolveSidebar,
 }) => (
   <footer className="app-footer">
     <Button onClick={onClear} variant="default" className="footer-button">
@@ -510,13 +527,13 @@ const Footer = ({
       </Button>
     </div>
 
-    <RandomDropdown
-      isOpen={isRandomDropdownOpen}
-      onToggle={onToggleRandomDropdown}
-      onRandomFill={onRandomFill}
-      onRandomRules={onRandomRules}
-      onRandomEverything={onRandomEverything}
-    />
+    <Button
+      onClick={onToggleEvolveSidebar}
+      variant="success"
+      className="footer-button"
+    >
+      Evolve
+    </Button>
   </footer>
 );
 
@@ -602,12 +619,8 @@ const Sidebar = ({
   onClose,
   cellSize,
   onCellSizeChange,
-  numCellStages,
-  onStagesChange,
   speed,
   onSpeedChange,
-  rules,
-  onRuleChange,
   onReset,
   colorScheme,
   onColorSchemeChange,
@@ -645,19 +658,6 @@ const Sidebar = ({
       </div>
 
       <div className="sidebar-section">
-        <h4 className="sidebar-section-title">Stages</h4>
-        <label className="sidebar-label">{numCellStages}</label>
-        <input
-          className="sidebar-slider"
-          type="range"
-          min="2"
-          max="8"
-          value={numCellStages}
-          onChange={onStagesChange}
-        />
-      </div>
-
-      <div className="sidebar-section">
         <h4 className="sidebar-section-title">Speed</h4>
         <label className="sidebar-label">Speed: {speed}</label>
         <input
@@ -686,8 +686,6 @@ const Sidebar = ({
         </select>
       </div>
 
-      <RulesControl rules={rules} onRuleChange={onRuleChange} />
-
       <div className="sidebar-footer">
         <Button onClick={onReset} variant="default" className="sidebar-reset">
           Reset
@@ -708,12 +706,12 @@ class App extends Component {
       speed: 5, // Speed scale from 1 (slowest) to 10 (fastest), default medium-fast
       colorScheme: "greyscale", // Default to greyscale
       isSidebarOpen: false, // Start with sidebar closed but make customization obvious through other UX improvements
+      isEvolveSidebarOpen: false, // New state for evolve sidebar
       // Grid will be calculated dynamically based on available space
       cellSize: 20,
       cells: [],
       rows: 0,
       cols: 0,
-      isRandomDropdownOpen: false, // New state for dropdown
       showInstructions: true, // New state for instructions overlay
     };
     this.autoStepInterval = null;
@@ -732,13 +730,15 @@ class App extends Component {
     document.removeEventListener("click", this.handleClickOutside);
   }
 
-  // Handler for clicking outside the dropdown
+  // Handler for clicking outside the sidebars
   handleClickOutside = (event) => {
+    // Close evolve sidebar if clicking outside
     if (
-      this.state.isRandomDropdownOpen &&
-      !event.target.closest(".random-dropdown")
+      this.state.isEvolveSidebarOpen &&
+      !event.target.closest(".evolve-sidebar") &&
+      !event.target.closest(".footer-button")
     ) {
-      this.setState({ isRandomDropdownOpen: false });
+      this.setState({ isEvolveSidebarOpen: false });
     }
   };
 
@@ -1078,8 +1078,8 @@ class App extends Component {
         speed: 5,
         colorScheme: "greyscale",
         isSidebarOpen: true,
+        isEvolveSidebarOpen: false,
         cellSize: 20,
-        isRandomDropdownOpen: false,
       },
       () => {
         // Recalculate grid with new cell size
@@ -1098,34 +1098,42 @@ class App extends Component {
     this.setState({ isSidebarOpen: false });
   };
 
-  // Handler for toggling the random dropdown
-  handleToggleRandomDropdown = () => {
+  // Handler for toggling the evolve sidebar
+  handleToggleEvolveSidebar = () => {
     this.setState((prevState) => ({
-      isRandomDropdownOpen: !prevState.isRandomDropdownOpen,
+      isEvolveSidebarOpen: !prevState.isEvolveSidebarOpen,
     }));
   };
 
-  // Handler for random fill from dropdown
-  handleRandomFillFromDropdown = () => {
-    this.handleRandomFill();
-    this.setState({ isRandomDropdownOpen: false });
+  // Handler for closing the evolve sidebar
+  handleCloseEvolveSidebar = () => {
+    this.setState({ isEvolveSidebarOpen: false });
   };
 
-  // Handler for random rules from dropdown
-  handleRandomRulesFromDropdown = () => {
-    this.handleRandomEvolution();
-    this.setState({ isRandomDropdownOpen: false });
+  // Handler for random everything from evolve sidebar
+  handleRandomEverythingFromEvolve = () => {
+    // First update stages, then run other functions in the callback
+    this.handleRandomStages(() => {
+      this.handleRandomFill();
+      this.handleRandomEvolution();
+      if (!this.state.isAutoStepping) {
+        this.startAutoStepping();
+        this.setState({ isAutoStepping: true });
+      }
+      // this.setState({ isEvolveSidebarOpen: false });
+    });
   };
 
-  // Handler for random everything from dropdown
-  handleRandomEverythingFromDropdown = () => {
-    this.handleRandomFill();
-    this.handleRandomEvolution();
-    if (!this.state.isAutoStepping) {
-      this.startAutoStepping();
-      this.setState({ isAutoStepping: true });
-    }
-    this.setState({ isRandomDropdownOpen: false });
+  handleRandomStages = (callback) => {
+    const newNumCellStages = 2 + Math.floor(Math.random() * 7);
+    this.setState(
+      {
+        numCellStages: newNumCellStages,
+        rules: createRules(newNumCellStages), // Also update rules for new stage count
+        cells: createCells(this.state.rows, this.state.cols), // Reset cells for new stage count
+      },
+      callback
+    );
   };
 
   // Handler to hide instructions on first interaction
@@ -1164,12 +1172,8 @@ class App extends Component {
           onStep={this.handleStepClick}
           onToggleAuto={this.handleAutoStepToggle}
           isAutoStepping={this.state.isAutoStepping}
-          onRandomFill={this.handleRandomFillFromDropdown}
-          onRandomRules={this.handleRandomRulesFromDropdown}
-          onRandomEverything={this.handleRandomEverythingFromDropdown}
           onClear={this.handleClear}
-          isRandomDropdownOpen={this.state.isRandomDropdownOpen}
-          onToggleRandomDropdown={this.handleToggleRandomDropdown}
+          onToggleEvolveSidebar={this.handleToggleEvolveSidebar}
         />
 
         <Sidebar
@@ -1177,12 +1181,8 @@ class App extends Component {
           onClose={this.handleCloseSidebar}
           cellSize={this.state.cellSize}
           onCellSizeChange={this.handleCellSizeChange}
-          numCellStages={this.state.numCellStages}
-          onStagesChange={this.handleStagesChange}
           speed={this.state.speed}
           onSpeedChange={this.handleSpeedChange}
-          rules={this.state.rules}
-          onRuleChange={this.handleRuleChange}
           onReset={this.handleReset}
           colorScheme={this.state.colorScheme}
           onColorSchemeChange={this.handleColorSchemeChange}
@@ -1190,8 +1190,25 @@ class App extends Component {
           cols={this.state.cols}
         />
 
+        <EvolveSidebar
+          isOpen={this.state.isEvolveSidebarOpen}
+          onClose={this.handleCloseEvolveSidebar}
+          onRandomEverything={this.handleRandomEverythingFromEvolve}
+          numCellStages={this.state.numCellStages}
+          onStagesChange={this.handleStagesChange}
+          rules={this.state.rules}
+          onRuleChange={this.handleRuleChange}
+        />
+
         {this.state.isSidebarOpen && (
           <div className="sidebar-backdrop" onClick={this.handleCloseSidebar} />
+        )}
+
+        {this.state.isEvolveSidebarOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={this.handleCloseEvolveSidebar}
+          />
         )}
 
         {this.state.showInstructions && (
