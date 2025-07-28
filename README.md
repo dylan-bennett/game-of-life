@@ -1,72 +1,47 @@
-# Getting Started with Create React App
+# Game of Life: Evolved
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An enhanced version of Conway's Game of Life with multi-stage cell evolution and customizable rules.
 
-## Available Scripts
+🎮 **[Live Demo](https://dylan-bennett.github.io/game-of-life-evolved/)**
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+### Multi-Stage Evolution
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Cells progress through 2-8 configurable stages instead of alive/dead
+- Each stage has unique survival rules
+- Visual progression through colors
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Interactive Controls
 
-### `npm test`
+- Click and drag to draw cells
+- Mouse wheel/pinch to zoom, drag to pan
+- Step through generations or run continuously
+- Full mobile touch support
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Customization
 
-### `npm run build`
+- Adjustable color schemes (greyscale and gradients)
+- Variable speed control
+- Custom rules for each stage and neighbor count
+- Randomization tools
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Technical Details
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Built with React, HTML5 Canvas, and SCSS. Canvas-based rendering for smooth performance with large grids.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Usage
 
-### `npm run eject`
+1. Draw cells by clicking and dragging
+2. Use "Step" or "Start" to run the simulation
+3. "Customize" for visual settings
+4. "Evolve" to modify stages and rules
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Mobile Experience
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The app is fully optimized for mobile devices with:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-# This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-
-# game-of-life-evolved
+- Touch-friendly drawing interface
+- Pinch-to-zoom and two-finger panning
+- Responsive layout that adapts to screen size
+- Mobile-specific help instructions
